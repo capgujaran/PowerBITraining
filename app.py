@@ -8,11 +8,12 @@ import random
 import pandas as pd
 import streamlit as st
 
-from course_data import ASSESSMENT, MODULES, RESOURCES, SCHEDULE
+from course_data import ASSESSMENT, MODULES, RESOURCES, SCHEDULE, TOOL_LABS
 
 
 APP_DIR = Path(__file__).parent
 DOWNLOAD_DIR = APP_DIR / "assets" / "downloads"
+SCREENSHOT_DIR = APP_DIR / "assets" / "screenshots"
 PASS_SCORE = 14
 
 st.set_page_config(
@@ -63,6 +64,9 @@ def inject_styles() -> None:
         .certificate { background:#fffdf5; border:9px double #d7b313; padding:3rem; text-align:center; border-radius:4px; }
         .certificate .name { font-family:'Manrope'; color:#0b1739; font-size:2rem; border-bottom:1px solid #d9d1ad; display:inline-block; padding:0 2rem .4rem; }
         .small-note { color:var(--muted); font-size:.85rem; }
+        .screen-note { background:#eef5ff; border:1px solid #cbdcf5; border-radius:14px; padding:.85rem 1rem; margin:.7rem 0 1rem; }
+        .screen-note b { color:#0b1739; }
+        .tool-path { background:white; border:1px solid var(--line); border-radius:18px; padding:1rem 1.15rem; box-shadow:0 5px 20px rgba(11,23,57,.05); }
         div[data-testid="stProgress"] > div > div > div { background-color:var(--yellow); }
         .stButton > button, .stDownloadButton > button { border-radius:10px; border:1px solid #d7b313; font-weight:700; }
         .stButton > button[kind="primary"] { background:var(--yellow); color:var(--ink); border-color:var(--yellow); }
@@ -222,11 +226,34 @@ def three_day_plan() -> None:
 
 
 def interactive_lab() -> None:
-    page_header("Try it", "Interactive lab", "Choose a module and manipulate a small finance example before working in Power BI Desktop.")
+    page_header("See it, then build it", "Power BI guided lab", "Choose a topic to study the relevant Power BI screen, follow the exact click path and reproduce the technique in the supplied practice file.")
     labels = {f"{m['code']} · {m['title']}": m for m in MODULES}
     selected = labels[st.selectbox("Interactive example", list(labels))]
     st.markdown(f"### {selected['title']}")
     lab_id = selected["id"]
+    guide = TOOL_LABS[lab_id]
+    st.subheader(guide["screen_title"])
+    screen_tabs = st.tabs([screen[0] for screen in guide["screens"]]) if len(guide["screens"]) > 1 else [st.container()]
+    for tab, (label, filename, caption, notices) in zip(screen_tabs, guide["screens"]):
+        with tab:
+            path = SCREENSHOT_DIR / filename
+            if path.exists():
+                st.image(str(path), caption=caption, width="stretch")
+            else:
+                st.warning(f"Course screenshot unavailable: {label}")
+            notice_html = "".join(f"<li>{item}</li>" for item in notices)
+            st.markdown(f'<div class="screen-note"><b>What to notice in this screen</b><ul>{notice_html}</ul></div>', unsafe_allow_html=True)
+
+    path_html = "".join(f"<li>{step}</li>" for step in guide["click_path"])
+    st.markdown(f'<div class="tool-path"><div class="eyebrow">Follow in Power BI</div><ol>{path_html}</ol><p><b>Student task</b><br>{guide["task"]}</p><p><b>Evidence to produce</b><br>{guide["evidence"]}</p></div>', unsafe_allow_html=True)
+    reproduced = st.checkbox("I reproduced this screen or technique in Power BI Desktop", key=f"reproduced_{lab_id}")
+    if reproduced:
+        st.success("Practice recorded for this session. Compare your result with the screenshot and the evidence checklist above.")
+    evidence_file = st.file_uploader("Optional: add a screenshot of your own completed work for self-review", type=["png", "jpg", "jpeg"], key=f"lab_evidence_{lab_id}")
+    if evidence_file:
+        st.image(evidence_file, caption="Your practice evidence", width="stretch")
+    st.divider()
+    st.subheader("Check your understanding")
     if lab_id == 1:
         question = st.text_input("Rewrite the business request", "Show me sales")
         grain = st.selectbox("Row grain", ["Invoice line", "Invoice header", "Monthly country total"])

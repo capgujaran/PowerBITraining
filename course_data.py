@@ -201,3 +201,119 @@ RESOURCES = [
     ("Benford audit · Reference PBIX", "Completed leading-digit analysis example", "benford-audit-reference.pbix"),
     ("Bonus business challenge", "Additional datasets and open-ended tasks", "bonus-business-challenge-pack.zip"),
 ]
+
+
+TOOL_LABS = {
+    1: {
+        "screen_title": "Recognise the Power BI workspace",
+        "screens": [
+            ("Power BI Service", "01-power-bi-service.jpeg", "A published dashboard in the Power BI Service, with navigation, tiles and the online workspace visible.", ["Left navigation for workspaces and content", "Dashboard tiles used for monitoring", "The online Service is a consumption and governance surface"]),
+        ],
+        "click_path": ["Open Power BI Desktop and identify Report, Data and Model views on the left rail", "Open an existing PBIX and locate the report pages, canvas and panes", "Use Home > Publish only after confirming the target workspace"],
+        "task": "Write down which part of your solution belongs in Desktop and which part belongs in the Service. Use one finance reporting example.",
+        "evidence": "A two-column Desktop vs Service solution note",
+    },
+    2: {
+        "screen_title": "Connect through Get Data",
+        "screens": [
+            ("Connector gallery", "02-get-data-connectors.jpeg", "The Get Data dialog groups file, database, Azure, online-service and other connectors.", ["The connector controls authentication and navigation", "Choose the connector that matches the operating process", "Select More to search the full connector catalogue"]),
+            ("Database connection", "02-sql-connection.png", "A SQL Server connection dialog showing server, database and connectivity settings.", ["Server and database identify the source", "Import and DirectQuery have different operating consequences", "Advanced SQL should be governed and documented"]),
+        ],
+        "click_path": ["Home > Get data > More", "Choose the source type and enter its connection details", "Use Navigator to confirm the table names and preview", "Choose Transform Data instead of Load when quality work is required"],
+        "task": "Connect to one supplied file, state its row grain and identify its candidate business key before loading it.",
+        "evidence": "A source profile containing grain, key, row count and refresh assumption",
+    },
+    3: {
+        "screen_title": "Work inside Power Query Editor",
+        "screens": [
+            ("Power Query Editor", "03-power-query-editor.png", "A working Power Query Editor window with the ribbon, data preview, formula bar and Applied Steps visible.", ["Queries are listed on the left", "The centre grid previews the selected query", "Applied Steps on the right record the transformation sequence", "The formula bar reveals the M expression behind a selected step"]),
+        ],
+        "click_path": ["Home > Transform data", "View > enable Formula bar, Column quality, Column distribution and Column profile", "Select a column and inspect type, valid values, errors and blanks", "Rename each important Applied Step so another reviewer can follow the logic", "Home > Close & Apply only after reconciliation"],
+        "task": "Clean the supplied journal or sales extract, then select each Applied Step and explain what changed and why.",
+        "evidence": "A refreshable query with descriptive step names and no unexplained errors",
+    },
+    4: {
+        "screen_title": "Append rows and merge attributes",
+        "screens": [
+            ("Append Queries", "04-append-queries.jpeg", "The Append dialog used to stack compatible tables vertically.", ["Append adds rows", "Column names and data types should be aligned", "Use Append as New when the source queries should remain available"]),
+            ("Merge Queries", "04-merge-queries.jpeg", "The Merge dialog used to match two tables by one or more selected keys.", ["Merge adds columns", "The selected key sequence must match", "Join kind determines which matched and unmatched rows survive"]),
+        ],
+        "click_path": ["Power Query Home > Append Queries > Append Queries as New for recurring extracts", "Select the tables and verify aligned columns", "Home > Merge Queries > Merge Queries as New for enrichment", "Select the key in both previews and choose the join kind", "Expand only the required columns, then reconcile rows and totals"],
+        "task": "Append the regional sales files, merge the product master, and use a Left Anti join to isolate unmapped products.",
+        "evidence": "A consolidated fact query plus an exceptions query for unmatched keys",
+    },
+    5: {
+        "screen_title": "Build and inspect the model",
+        "screens": [
+            ("Star schema", "05-model-star-schema.png", "Model view showing a central fact table connected to descriptive dimensions.", ["Fact table sits at the transaction grain", "Dimensions filter the fact through one-to-many relationships", "A dedicated Date table supports consistent time analysis"]),
+            ("Relationship paths", "05-model-relationships.png", "A more developed model showing active relationship paths across several tables.", ["Solid lines are active relationships", "Arrow direction shows filter propagation", "Technical bridge tables should solve a defined modelling problem"]),
+        ],
+        "click_path": ["Select Model view on the left rail", "Place fact tables centrally and dimensions around them", "Drag a unique dimension key to the matching fact foreign key", "Open relationship properties and verify cardinality and cross-filter direction", "Use Manage relationships to inspect inactive or ambiguous paths"],
+        "task": "Create the Date, Product, Customer and Geography relationships, then test that each dimension filters Sales correctly.",
+        "evidence": "A clean model diagram with one-to-many, single-direction relationships",
+    },
+    6: {
+        "screen_title": "Write DAX in the formula bar",
+        "screens": [
+            ("DAX calculation", "06-dax-formula.png", "Model view with the DAX formula bar active while a calculated table is being defined.", ["The formula bar is where DAX is authored", "Field and table references must be unambiguous", "A calculation belongs in the model, not in a visual title or manual spreadsheet"]),
+        ],
+        "click_path": ["Modeling > New measure", "Enter a base measure such as Net Sales = SUM(Sales[NetAmount])", "Add Gross Margin and Gross Margin % using DIVIDE", "Place the measure in a table visual", "Apply country and date filters and confirm the result changes correctly"],
+        "task": "Create Net Sales, Gross Margin, Margin %, Budget Variance and Prior Year Sales as explicit measures.",
+        "evidence": "A measure table with business-friendly names, formats and validated totals",
+    },
+    7: {
+        "screen_title": "Build a visual from the report canvas",
+        "screens": [
+            ("Visualizations pane", "07-visualizations-pane.jpeg", "A report visual selected with its field wells and available visual types visible.", ["Select visual type by analytical purpose", "Place fields in the correct wells", "Formatting should clarify hierarchy rather than decorate the page"]),
+        ],
+        "click_path": ["Select Report view", "Choose a visual from the Visualizations pane", "Drag dimensions and measures into the relevant field wells", "Sort, format numbers and write a question-led title", "Use Format > Edit interactions to test cross-filter behaviour"],
+        "task": "Build one KPI, one monthly trend and one sorted category-variance visual. Explain why each visual fits its question.",
+        "evidence": "A clean analysis page with consistent titles, units and accessible contrast",
+    },
+    8: {
+        "screen_title": "Turn visuals into a report experience",
+        "screens": [
+            ("Multi-visual report page", "08-report-experience.png", "A completed report page combining KPIs, trends and drivers into a guided analytical view.", ["Headline values are visible first", "Trend and driver visuals answer natural follow-up questions", "Page and visual state should remain understandable after interaction"]),
+        ],
+        "click_path": ["Create Overview, Drivers and Transaction Detail pages", "Insert > Buttons > Navigator > Page navigator", "Add a drillthrough field to the detail page", "View > Bookmarks and Selection to create a Reset Filters state", "Test the path from headline KPI to underlying transactions"],
+        "task": "Create a three-page navigation path and a drillthrough page that retains the selected entity context.",
+        "evidence": "A report journey that moves from overview to driver to transaction evidence",
+    },
+    9: {
+        "screen_title": "Read the M code behind the query",
+        "screens": [
+            ("Advanced Editor", "09-advanced-editor.jpeg", "The Power Query Advanced Editor displaying a let/in expression created from transformation steps.", ["Named expressions appear between let and in", "Each step can reference an earlier step", "The expression after in is the query result"]),
+        ],
+        "click_path": ["Power Query Editor > View > Advanced Editor", "Locate the let block and the expression after in", "Rename one generated step and observe the code change", "Home > Manage Parameters > New Parameter", "Replace the hard-coded source path with the parameter"],
+        "task": "Parameterize the folder path and convert the repeated file-cleaning sequence into a reusable function.",
+        "evidence": "A portable query with a readable let/in structure and no hard-coded learner path",
+    },
+    10: {
+        "screen_title": "Review an audit analytics report",
+        "screens": [
+            ("Benford first-digit analysis", "10-benford-analysis.png", "A Power BI report comparing observed first-digit frequencies with the expected Benford distribution and listing transactions for review.", ["Observed and expected patterns are compared visually", "The transaction table supports investigation", "A deviation is a risk indicator, not a conclusion of fraud"]),
+        ],
+        "click_path": ["Create a First Digit column from absolute transaction amount", "Create observed count and observed percentage measures", "Create or relate an expected Benford table", "Plot observed and expected percentages by first digit", "Add drillthrough or a detail table for the flagged population"],
+        "task": "Build the first-digit comparison and investigate the largest deviations using the supplied transaction detail.",
+        "evidence": "A documented exception report with population rules and transaction-level evidence",
+    },
+    11: {
+        "screen_title": "Configure refresh and security",
+        "screens": [
+            ("Gateway management", "11-gateway-settings.jpeg", "Power BI Service settings showing the gateway management entry point.", ["Gateways connect the Service to supported on-premises sources", "Refresh ownership and credentials require deliberate handover", "Gateway availability must be tested before go-live"]),
+            ("Row-level security", "11-row-level-security.png", "A row-level security role being defined for a model table.", ["A role contains the filter rule", "Users or groups are assigned after publishing", "Use View as role in Desktop before distribution"]),
+        ],
+        "click_path": ["Desktop > Modeling > Manage roles and define the row filter", "Modeling > View as to test every role", "Home > Publish and choose the controlled workspace", "Service > semantic model settings > configure credentials and refresh", "Service > Security > assign the approved users or groups"],
+        "task": "Design a regional-manager role and a deployment checklist covering workspace access, refresh owner and gateway dependency.",
+        "evidence": "A tested RLS role and a practical deployment runbook",
+    },
+    12: {
+        "screen_title": "Study the completed capstone pattern",
+        "screens": [
+            ("Management dashboard", "12-capstone-dashboard.png", "A completed Power BI dashboard combining KPIs, category analysis, maps, trends and detail views.", ["KPIs answer the opening management question", "Drivers and trends explain performance", "Detailed visuals preserve a path to evidence", "The whole page uses a consistent visual language"]),
+        ],
+        "click_path": ["Transform and reconcile the supplied source files", "Create the star schema and explicit measure pack", "Build Overview, Performance Drivers and Audit Exceptions pages", "Add navigation, drillthrough and reset interactions", "Reconcile control totals and present a five-minute recommendation"],
+        "task": "Rebuild the capstone from the starter PBIX, then compare your choices with the reference solution only after validation.",
+        "evidence": "A complete PBIX, reconciliation note and five-minute management presentation",
+    },
+}
