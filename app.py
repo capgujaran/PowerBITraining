@@ -155,6 +155,29 @@ def inject_styles() -> None:
         .schema-box span.mismatch { background:#fff0e8; color:#9a4e32; }
         .schema-arrow { text-align:center; color:var(--teal); font-size:1.55rem; font-weight:800; }
         .append-warning { background:#fff7e7; border-left:4px solid var(--gold); color:#6d5632; padding:.8rem .9rem; margin:.65rem 0; border-radius:0 6px 6px 0; }
+        .lab-process { display:flex; align-items:stretch; gap:.45rem; margin:.8rem 0 1.15rem; }
+        .lab-process__node { flex:1; min-width:0; background:white; border:1px solid var(--line); border-top:4px solid var(--teal); border-radius:7px; padding:.75rem .8rem; }
+        .lab-process__node.active { background:#eef6f4; border-color:#83b7ae; }
+        .lab-process__node.warning { background:#fff7e7; border-top-color:var(--gold); }
+        .lab-process__node b { display:block; color:var(--ink); font-size:.82rem; margin-bottom:.2rem; }
+        .lab-process__node span { display:block; color:var(--muted); font-size:.7rem; line-height:1.35; }
+        .lab-process__arrow { display:grid; place-content:center; color:var(--gold); font-size:1.25rem; font-weight:800; }
+        .lab-summary { background:white; border:1px solid var(--line); border-left:5px solid var(--teal); border-radius:7px; padding:.9rem 1rem; margin:.7rem 0 1rem; }
+        .lab-summary b { color:var(--ink); }.lab-summary p { color:var(--muted); margin:.25rem 0 0; line-height:1.5; }
+        .model-map { display:grid; grid-template-columns:repeat(4,1fr); gap:.65rem; margin:.8rem 0 1.1rem; }
+        .model-table { background:white; border:1px solid var(--line); border-top:4px solid #7892a5; border-radius:7px; padding:.8rem; text-align:center; }
+        .model-table.fact { grid-column:1/-1; max-width:520px; width:100%; margin:auto; border-top-color:var(--gold); background:#fffaf0; }
+        .model-table b { display:block; color:var(--ink); }.model-table span { color:var(--muted); font-size:.7rem; }
+        .context-strip { display:flex; flex-wrap:wrap; gap:.4rem; margin:.65rem 0 1rem; }
+        .context-strip span { background:#eaf3f1; color:#315c57; border:1px solid #c8ded8; border-radius:4px; padding:.32rem .48rem; font-size:.72rem; font-weight:700; }
+        .report-path { display:grid; grid-template-columns:repeat(3,1fr); gap:.55rem; margin:.7rem 0 1rem; }
+        .report-path div { position:relative; background:white; border:1px solid var(--line); border-radius:7px; padding:.8rem; color:var(--muted); text-align:center; }
+        .report-path div.active { background:#183743; color:white; border-color:#183743; }
+        .report-path b { display:block; color:inherit; }
+        .governance-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.55rem; margin:.7rem 0 1rem; }
+        .governance-step { background:white; border:1px solid var(--line); border-top:4px solid var(--teal); border-radius:7px; padding:.75rem; }
+        .governance-step.warning { border-top-color:var(--gold); background:#fffaf0; }
+        .governance-step b { display:block; color:var(--ink); font-size:.8rem; }.governance-step span { color:var(--muted); font-size:.68rem; line-height:1.35; }
         .retained-chart { display:flex; flex-direction:column; gap:1rem; background:white; border:1px solid var(--line); border-radius:8px; padding:1.15rem; min-height:250px; justify-content:center; }
         .retained-row__label { display:flex; justify-content:space-between; gap:1rem; color:#53656b; font-size:.74rem; font-weight:700; margin-bottom:.4rem; }
         .retained-row__label b { color:var(--ink); font-family:'Libre Baskerville'; font-size:.9rem; }
@@ -230,7 +253,7 @@ def inject_styles() -> None:
         div[data-testid="stDataFrame"] { border:1px solid var(--line); border-radius:7px; overflow:hidden; }
         div[data-baseweb="select"] > div, .stTextInput input, .stNumberInput input { border-radius:6px; }
         div[data-testid="stAlert"] { border-radius:7px; }
-        @media(max-width:900px){.hero,.assessment-hero,.trainer-hero{grid-template-columns:1fr}.hero,.assessment-hero{padding:2.6rem}.journey-wheel{display:none}.metric-row,.trainer-stat-grid{grid-template-columns:repeat(2,1fr)}.merge-flow,.schema-map{grid-template-columns:1fr}.merge-arrows,.schema-arrow{transform:rotate(90deg);padding:.25rem}.append-sources{grid-template-columns:1fr}.expertise-grid{grid-template-columns:1fr}.award-grid{grid-template-columns:1fr}.trainer-photo,.trainer-photo img{min-height:0;max-height:520px}}
+        @media(max-width:900px){.hero,.assessment-hero,.trainer-hero{grid-template-columns:1fr}.hero,.assessment-hero{padding:2.6rem}.journey-wheel{display:none}.metric-row,.trainer-stat-grid{grid-template-columns:repeat(2,1fr)}.merge-flow,.schema-map{grid-template-columns:1fr}.merge-arrows,.schema-arrow{transform:rotate(90deg);padding:.25rem}.append-sources,.model-map,.report-path,.governance-grid{grid-template-columns:1fr}.model-table.fact{grid-column:auto}.lab-process{flex-direction:column}.lab-process__arrow{transform:rotate(90deg)}.expertise-grid{grid-template-columns:1fr}.award-grid{grid-template-columns:1fr}.trainer-photo,.trainer-photo img{min-height:0;max-height:520px}}
         @media(max-width:560px){.metric-row,.trainer-stat-grid,.day-result-grid{grid-template-columns:1fr}.block-container{padding:4.5rem 1rem 3rem}.hero,.assessment-hero,.trainer-copy{padding:2rem 1.35rem}.page-intro{display:block}.page-intro h1{font-size:2rem}.result-panel{grid-template-columns:1fr;text-align:center}.result-ring{margin:auto}.award-card{padding-left:1rem;padding-top:3.6rem}.award-year{top:1rem}}
         @media print {[data-testid="stSidebar"],header,[data-testid="stToolbar"],.page-intro,.metric-row,.small-note,.credit,.stAlert{display:none!important}.block-container{max-width:none;padding:0}.certificate{box-shadow:none;min-height:92vh;display:flex;flex-direction:column;justify-content:center}}
         </style>
@@ -416,6 +439,199 @@ def show_course_image(path: Path, caption: str) -> None:
     st.image(str(path), caption=caption, width=min(source_width, 1000))
     if source_width < 720:
         st.caption("Shown at its original width to preserve clarity. Use fullscreen to inspect the source capture.")
+
+
+def sample_model_tables() -> dict[str, pd.DataFrame]:
+    products = pd.DataFrame(
+        {
+            "ProductKey": ["P01", "P02", "P03"],
+            "Product": ["Business Laptop", "Monitor", "Advisory Service"],
+            "Category": ["Hardware", "Hardware", "Services"],
+            "UnitPrice": [4200, 1350, 2500],
+            "UnitCost": [3350, 900, 1050],
+        }
+    )
+    customers = pd.DataFrame(
+        {
+            "CustomerKey": ["C01", "C02", "C03", "C04", "C05", "C06"],
+            "Customer": ["Desert Retail", "Marina Foods", "Creek Trading", "Oasis Services", "Falcon Stores", "Harbour Group"],
+            "Region": ["Dubai", "Sharjah", "Dubai", "Ajman", "Sharjah", "Ajman"],
+            "Segment": ["Retail", "Hospitality", "Wholesale", "Services", "Retail", "Corporate"],
+        }
+    )
+    sales = pd.DataFrame(
+        {
+            "InvoiceID": [f"INV-{1000 + i}" for i in range(1, 16)],
+            "InvoiceDate": pd.to_datetime(
+                ["2026-01-05", "2026-01-09", "2026-01-15", "2026-01-24", "2026-01-29", "2026-02-04", "2026-02-10", "2026-02-15", "2026-02-21", "2026-02-27", "2026-03-03", "2026-03-09", "2026-03-16", "2026-03-22", "2026-03-28"]
+            ),
+            "CustomerKey": ["C01", "C02", "C03", "C04", "C05", "C06", "C01", "C03", "C04", "C02", "C05", "C06", "C01", "C04", "C03"],
+            "ProductKey": ["P01", "P02", "P03", "P02", "P01", "P03", "P02", "P01", "P03", "P02", "P01", "P03", "P01", "P02", "P03"],
+            "Quantity": [2, 4, 3, 2, 1, 4, 5, 2, 2, 3, 2, 3, 1, 6, 4],
+        }
+    )
+    sales = sales.merge(products[["ProductKey", "UnitPrice", "UnitCost"]], on="ProductKey", how="left")
+    sales["NetAmount"] = sales["Quantity"] * sales["UnitPrice"]
+    sales["CostAmount"] = sales["Quantity"] * sales["UnitCost"]
+    sales["GrossMargin"] = sales["NetAmount"] - sales["CostAmount"]
+    dates = pd.DataFrame({"Date": pd.date_range("2026-01-01", "2026-03-31", freq="D")})
+    dates["Month"] = dates["Date"].dt.strftime("%b")
+    dates["MonthNumber"] = dates["Date"].dt.month
+    budgets = pd.DataFrame({"Region": ["Dubai", "Sharjah", "Ajman"], "Budget": [52000, 40000, 34000]})
+    return {"Sales": sales, "Product": products, "Customer": customers, "Date": dates, "Budget": budgets}
+
+
+def dataframes_zip(tables: list[tuple[str, pd.DataFrame]]) -> bytes:
+    buffer = BytesIO()
+    with ZipFile(buffer, "w", ZIP_DEFLATED) as archive:
+        for filename, table in tables:
+            archive.writestr(filename, table.to_csv(index=False))
+    return buffer.getvalue()
+
+
+def lab_banner(title: str, copy: str) -> None:
+    st.markdown(f'<div class="merge-callout"><b>{title}</b><br>{copy}</div>', unsafe_allow_html=True)
+
+
+def process_strip(nodes: list[tuple[str, str, str]]) -> None:
+    parts = []
+    for index, (title, subtitle, state) in enumerate(nodes):
+        if index:
+            parts.append('<div class="lab-process__arrow">→</div>')
+        parts.append(f'<div class="lab-process__node {state}"><b>{title}</b><span>{subtitle}</span></div>')
+    st.markdown(f'<div class="lab-process">{"".join(parts)}</div>', unsafe_allow_html=True)
+
+
+def detailed_workflow_lab() -> None:
+    lab_banner("Interactive analytics workflow laboratory", "Turn a vague reporting request into a decision-ready Power BI solution. The question, filtered dataset, KPIs and delivery path respond together.")
+    model = sample_model_tables()
+    sales = model["Sales"].merge(model["Product"][["ProductKey", "Product", "Category"]], on="ProductKey").merge(model["Customer"][["CustomerKey", "Customer", "Region"]], on="CustomerKey")
+    question = st.selectbox(
+        "Management question",
+        ["Which region drives sales and margin?", "Which product category is underperforming?", "Which customers need management attention?"],
+        key="workflow_question",
+    )
+    audience = st.selectbox("Primary audience", ["CFO", "Finance manager", "Internal auditor"], key="workflow_audience")
+    region = st.selectbox("Analysis scope", ["All regions", "Dubai", "Sharjah", "Ajman"], key="workflow_region")
+    filtered = sales if region == "All regions" else sales[sales["Region"] == region]
+    decision_map = {
+        "Which region drives sales and margin?": "Reallocate commercial focus and challenge regional performance",
+        "Which product category is underperforming?": "Review pricing, cost and product-mix decisions",
+        "Which customers need management attention?": "Prioritise account review and concentration risk",
+    }
+    st.markdown(f'<div class="lab-summary"><b>Decision-ready requirement</b><p>{audience} needs to answer “{question}” for {region.lower()} so the team can {decision_map[question].lower()}.</p></div>', unsafe_allow_html=True)
+    process_strip(
+        [
+            ("Business question", "Decision, audience, grain and benchmark", "active"),
+            ("Power BI Desktop", "Transform, model, calculate and design", "active"),
+            ("Power BI Service", "Publish, refresh, secure and distribute", "active"),
+            (audience, "Consume insight and take action", "active"),
+        ]
+    )
+    metrics = st.columns(3)
+    metrics[0].metric("Net sales", f"AED {filtered['NetAmount'].sum():,.0f}")
+    metrics[1].metric("Gross margin", f"AED {filtered['GrossMargin'].sum():,.0f}")
+    metrics[2].metric("Transactions", len(filtered))
+    group_field = "Region" if "region" in question.lower() else "Category" if "product" in question.lower() else "Customer"
+    summary = filtered.groupby(group_field, as_index=False)[["NetAmount", "GrossMargin"]].sum().set_index(group_field)
+    st.bar_chart(summary)
+    with st.expander("Inspect the transaction grain and business keys"):
+        st.dataframe(filtered[["InvoiceID", "InvoiceDate", "CustomerKey", "ProductKey", "Quantity", "NetAmount", "GrossMargin"]], hide_index=True, use_container_width=True)
+        st.caption("Grain: one row per invoice-product transaction. InvoiceID identifies the transaction; CustomerKey and ProductKey connect descriptive dimensions.")
+    st.download_button("Download workflow sample data (.csv)", filtered.to_csv(index=False), "analytics-workflow-sample.csv", "text/csv", key="workflow_download", use_container_width=True)
+
+
+def detailed_connection_lab() -> None:
+    lab_banner("Interactive source and connection laboratory", "Change the operating requirement to see the connector, storage mode, profiling checks and refresh architecture update.")
+    source = st.selectbox("Source pattern", ["Monthly Excel files", "Governed SQL Server", "SharePoint document library", "Web API"], key="connection_source")
+    row_volume = st.select_slider("Estimated data volume", options=[50_000, 250_000, 1_000_000, 5_000_000, 20_000_000], value=250_000, key="connection_rows")
+    latency = st.selectbox("Required freshness", ["Monthly", "Daily", "Hourly", "Near real time"], key="connection_latency")
+    mapping = {
+        "Monthly Excel files": ("Folder", "Import", "Retain file name and standardise every monthly schema"),
+        "Governed SQL Server": ("SQL Server", "DirectQuery" if latency == "Near real time" and row_volume >= 5_000_000 else "Import", "Use a curated view and confirm query folding"),
+        "SharePoint document library": ("SharePoint Folder", "Import", "Filter the folder path before combining files"),
+        "Web API": ("Web", "Import", "Plan authentication, pagination and rate-limit handling"),
+    }
+    connector, mode, control = mapping[source]
+    process_strip(
+        [
+            (source, f"{row_volume:,} estimated rows", "active"),
+            (connector, "Authenticate and preview in Navigator", "active"),
+            (mode, f"Refresh target: {latency}", "active"),
+            ("Power Query", control, "warning" if source != "Governed SQL Server" else "active"),
+        ]
+    )
+    cols = st.columns(3)
+    cols[0].metric("Recommended connector", connector)
+    cols[1].metric("Starting mode", mode)
+    cols[2].metric("Expected grain", "Invoice line")
+    profile = pd.DataFrame(
+        [
+            ["InvoiceID", "Text", "0%", "Candidate transaction key"],
+            ["InvoiceDate", "Date", "0%", "Required for time analysis"],
+            ["CustomerKey", "Text", "0%", "Dimension foreign key"],
+            ["NetAmount", "Decimal", "0.6%", "Investigate blanks before aggregation"],
+        ],
+        columns=["Column", "Expected type", "Sample null rate", "Profiling decision"],
+    )
+    st.dataframe(profile, hide_index=True, use_container_width=True)
+    if mode == "DirectQuery":
+        st.warning("DirectQuery is justified only after source performance, concurrency and report interactions are tested. Near-real-time need alone is not enough.")
+    else:
+        st.info("Import is the recommended starting point because it provides fast interaction and modelling flexibility for this requirement.")
+    sample_sales = sample_model_tables()["Sales"]
+    st.download_button("Download source profiling sample (.csv)", sample_sales.to_csv(index=False), "connection-source-sample.csv", "text/csv", key="connection_download", use_container_width=True)
+
+
+def detailed_power_query_lab() -> None:
+    lab_banner("Interactive Power Query transformation laboratory", "Apply repeatable steps to a deliberately messy finance extract. The preview, quality counts, row structure and M translation update after every selection.")
+    messy = pd.DataFrame(
+        {
+            "Account": [" 4000", "5000 ", " 6000", "7000"],
+            "Region": ["Dubai", "", "Sharjah", "Ajman"],
+            "Jan": ["12500", "8200", "N/A", "4100"],
+            "Feb": ["13100", "", "7600", "invalid"],
+            "Mar": ["14000", "9100", "7900", "4500"],
+        }
+    )
+    steps = ["Trim account codes", "Fill missing region", "Convert amounts and replace errors", "Unpivot month columns"]
+    selected_steps = st.multiselect("Applied steps", steps, default=steps[:2], key="pq_steps")
+    cleaned = messy.copy()
+    if steps[0] in selected_steps:
+        cleaned["Account"] = cleaned["Account"].str.strip()
+    if steps[1] in selected_steps:
+        cleaned["Region"] = cleaned["Region"].replace("", None).ffill()
+    if steps[2] in selected_steps:
+        for column in ["Jan", "Feb", "Mar"]:
+            cleaned[column] = pd.to_numeric(cleaned[column], errors="coerce")
+    if steps[3] in selected_steps:
+        cleaned = cleaned.melt(id_vars=["Account", "Region"], var_name="Month", value_name="Amount")
+    nodes = [(step, "Applied and refreshable" if step in selected_steps else "Not yet applied", "active" if step in selected_steps else "") for step in steps]
+    process_strip(nodes)
+    before_col, after_col = st.columns(2)
+    with before_col:
+        st.markdown("#### Source preview")
+        st.dataframe(messy, hide_index=True, use_container_width=True)
+    with after_col:
+        st.markdown("#### Live query result")
+        st.dataframe(cleaned.fillna("—"), hide_index=True, use_container_width=True)
+    invalid_values = int(messy[["Jan", "Feb", "Mar"]].isin(["N/A", "invalid", ""]).sum().sum())
+    remaining_errors = 0 if steps[2] in selected_steps else invalid_values
+    metrics = st.columns(3)
+    metrics[0].metric("Output rows", len(cleaned))
+    metrics[1].metric("Invalid source values", invalid_values)
+    metrics[2].metric("Unresolved conversion risks", remaining_errors)
+    m_steps = ['Source = Csv.Document(File.Contents(SourcePath))']
+    if steps[0] in selected_steps:
+        m_steps.append('Trimmed = Table.TransformColumns(Source, {{"Account", Text.Trim}})')
+    if steps[1] in selected_steps:
+        m_steps.append('FilledRegion = Table.FillDown(Trimmed, {"Region"})')
+    if steps[2] in selected_steps:
+        m_steps.append('TypedAmounts = Table.TransformColumnTypes(FilledRegion, {{"Jan", type number}, {"Feb", type number}, {"Mar", type number}})')
+    if steps[3] in selected_steps:
+        m_steps.append('Unpivoted = Table.Unpivot(TypedAmounts, {"Jan", "Feb", "Mar"}, "Month", "Amount")')
+    st.code("let\n    " + ",\n    ".join(m_steps) + f"\nin\n    {m_steps[-1].split(' = ')[0]}", language="powerquery")
+    st.download_button("Download messy Power Query sample (.csv)", messy.to_csv(index=False), "messy-finance-extract.csv", "text/csv", key="pq_download", use_container_width=True)
 
 
 def append_sample_tables(scenario: str, normalize_headers: bool, inject_duplicate: bool) -> list[tuple[str, str, pd.DataFrame]]:
@@ -817,6 +1033,379 @@ def detailed_merge_lab() -> None:
         st.caption("After the merge, select the expand icon on the new Customer column and keep only the attributes required for analysis.")
 
 
+def detailed_model_lab() -> None:
+    lab_banner("Interactive star-schema laboratory", "Test relationship design with a realistic Sales fact and four dimensions. Duplicate keys, filter direction and output rows respond together.")
+    model = sample_model_tables()
+    products = model["Product"].copy()
+    introduce_duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension", key="model_duplicate_key")
+    bidirectional = st.toggle("Use bidirectional filtering everywhere", key="model_bidirectional")
+    if introduce_duplicate:
+        duplicate = products.iloc[[0]].copy()
+        duplicate["Product"] = "Business Laptop · duplicate master row"
+        products = pd.concat([products, duplicate], ignore_index=True)
+    relation_state = "warning" if introduce_duplicate else "active"
+    filter_label = "Both directions · ambiguity risk" if bidirectional else "Dimension → fact · recommended"
+    st.markdown(
+        f'''<div class="model-map">
+          <div class="model-table"><b>Date dimension</b><span>Date is unique · 1 → *</span></div>
+          <div class="model-table {relation_state}"><b>Product dimension</b><span>{"Duplicate P01 · relationship invalid" if introduce_duplicate else "ProductKey unique · 1 → *"}</span></div>
+          <div class="model-table"><b>Customer dimension</b><span>CustomerKey unique · 1 → *</span></div>
+          <div class="model-table"><b>Budget table</b><span>Region target · separate grain</span></div>
+          <div class="model-table fact"><b>Sales fact</b><span>One row per invoice-product transaction · repeated foreign keys · {filter_label}</span></div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+    category = st.selectbox("Filter from Product dimension", ["All categories", "Hardware", "Services"], key="model_category")
+    valid_product_keys = model["Product"]["ProductKey"] if category == "All categories" else model["Product"].loc[model["Product"]["Category"] == category, "ProductKey"]
+    filtered_sales = model["Sales"][model["Sales"]["ProductKey"].isin(valid_product_keys)]
+    joined = model["Sales"].merge(products[["ProductKey", "Product", "Category"]], on="ProductKey", how="left")
+    metrics = st.columns(4)
+    metrics[0].metric("Fact rows", len(model["Sales"]))
+    metrics[1].metric("Rows after master join", len(joined), f"{len(joined)-len(model['Sales']):+d}")
+    metrics[2].metric("Visible sales", f"AED {filtered_sales['NetAmount'].sum():,.0f}")
+    metrics[3].metric("Product key status", "Duplicate" if introduce_duplicate else "Unique")
+    if introduce_duplicate:
+        st.error("Relationship control failed: ProductKey is no longer unique on the one side. Joining P01 multiplies matching Sales rows and can overstate totals.")
+    elif bidirectional:
+        st.warning("The keys are valid, but bidirectional filtering everywhere can create ambiguous paths. Use single-direction dimension-to-fact filtering unless a tested requirement justifies otherwise.")
+    else:
+        st.success("Valid star schema: unique dimension keys filter repeated fact keys in one predictable direction.")
+    dimension_tab, fact_tab, joined_tab = st.tabs(["Product dimension", "Sales fact", "Joined diagnostic"])
+    with dimension_tab:
+        st.dataframe(products, hide_index=True, use_container_width=True)
+    with fact_tab:
+        st.dataframe(model["Sales"], hide_index=True, use_container_width=True)
+    with joined_tab:
+        st.dataframe(joined[["InvoiceID", "ProductKey", "Product", "Quantity", "NetAmount"]], hide_index=True, use_container_width=True)
+    st.download_button(
+        "Download star-schema practice tables (.zip)",
+        dataframes_zip([(f"{name}.csv", table) for name, table in model.items()]),
+        "star-schema-practice.zip",
+        "application/zip",
+        key="model_download",
+        use_container_width=True,
+    )
+
+
+def detailed_dax_lab() -> None:
+    lab_banner("Interactive DAX and filter-context laboratory", "Change slicers and measures to see the same reusable DAX expression recalculate under a different filter context.")
+    model = sample_model_tables()
+    sales = model["Sales"].merge(model["Product"][["ProductKey", "Product", "Category"]], on="ProductKey").merge(model["Customer"][["CustomerKey", "Region"]], on="CustomerKey")
+    region = st.selectbox("Region filter", ["All regions", "Dubai", "Sharjah", "Ajman"], key="dax_region")
+    category = st.selectbox("Category filter", ["All categories", "Hardware", "Services"], key="dax_category")
+    measure = st.selectbox("Measure", ["Net Sales", "Gross Margin", "Gross Margin %", "Average Invoice Value"], key="dax_measure")
+    filtered = sales.copy()
+    if region != "All regions":
+        filtered = filtered[filtered["Region"] == region]
+    if category != "All categories":
+        filtered = filtered[filtered["Category"] == category]
+    values = {
+        "Net Sales": filtered["NetAmount"].sum(),
+        "Gross Margin": filtered["GrossMargin"].sum(),
+        "Gross Margin %": filtered["GrossMargin"].sum() / filtered["NetAmount"].sum() if filtered["NetAmount"].sum() else 0,
+        "Average Invoice Value": filtered.groupby("InvoiceID")["NetAmount"].sum().mean() if len(filtered) else 0,
+    }
+    dax = {
+        "Net Sales": "Net Sales = SUM(Sales[NetAmount])",
+        "Gross Margin": "Gross Margin = SUM(Sales[GrossMargin])",
+        "Gross Margin %": "Gross Margin % = DIVIDE([Gross Margin], [Net Sales])",
+        "Average Invoice Value": "Average Invoice Value = AVERAGEX(VALUES(Sales[InvoiceID]), [Net Sales])",
+    }
+    region_chip = region.replace("All regions", "All")
+    category_chip = category.replace("All categories", "All")
+    st.markdown(f'<div class="context-strip"><span>Report filter · {region_chip}</span><span>Visual filter · {category_chip}</span><span>Measure · {measure}</span><span>Rows visible · {len(filtered)}</span></div>', unsafe_allow_html=True)
+    display_value = f"{values[measure]:.1%}" if measure == "Gross Margin %" else f"AED {values[measure]:,.0f}"
+    c1, c2 = st.columns([.55, 1.45])
+    with c1:
+        st.metric(measure, display_value)
+        st.code(dax[measure], language="text")
+        st.caption("The measure definition stays unchanged; the result changes because the filter context changes.")
+    with c2:
+        product_summary = filtered.groupby("Product", as_index=False)[["NetAmount", "GrossMargin"]].sum().set_index("Product")
+        st.bar_chart(product_summary)
+    st.dataframe(filtered[["InvoiceID", "InvoiceDate", "Region", "Product", "Quantity", "NetAmount", "GrossMargin"]], hide_index=True, use_container_width=True)
+    st.download_button("Download DAX practice model (.zip)", dataframes_zip([("Sales.csv", model["Sales"]), ("Product.csv", model["Product"]), ("Customer.csv", model["Customer"])]), "dax-filter-context-practice.zip", "application/zip", key="dax_download", use_container_width=True)
+
+
+def detailed_visual_lab() -> None:
+    lab_banner("Interactive visual-selection laboratory", "Start with the business question, test a visual type and compare it with the recommended analytical form using the same finance dataset.")
+    model = sample_model_tables()
+    sales = model["Sales"].merge(model["Product"][["ProductKey", "Product", "Category"]], on="ProductKey").merge(model["Customer"][["CustomerKey", "Customer", "Region"]], on="CustomerKey")
+    question = st.selectbox(
+        "Business question",
+        ["How is sales changing over time?", "Which product contributes most?", "What is total gross margin?", "Which transactions support the total?", "Is higher sales associated with higher margin?"],
+        key="visual_question",
+    )
+    recommendations = {
+        "How is sales changing over time?": "Line chart",
+        "Which product contributes most?": "Sorted bar chart",
+        "What is total gross margin?": "Card",
+        "Which transactions support the total?": "Matrix / table",
+        "Is higher sales associated with higher margin?": "Scatter plot",
+    }
+    visual = st.selectbox("Visual to test", ["Line chart", "Sorted bar chart", "Card", "Matrix / table", "Scatter plot"], index=["Line chart", "Sorted bar chart", "Card", "Matrix / table", "Scatter plot"].index(recommendations[question]), key="visual_choice")
+    st.markdown(f'<div class="lab-summary"><b>Recommended starting point · {recommendations[question]}</b><p>Choose a visual because its structure matches the analytical question, not because it is visually decorative.</p></div>', unsafe_allow_html=True)
+    if visual == "Line chart":
+        monthly = sales.assign(Month=sales["InvoiceDate"].dt.to_period("M").astype(str)).groupby("Month", as_index=True)[["NetAmount", "GrossMargin"]].sum()
+        st.line_chart(monthly)
+    elif visual == "Sorted bar chart":
+        by_product = sales.groupby("Product", as_index=False)["NetAmount"].sum().sort_values("NetAmount").set_index("Product")
+        st.bar_chart(by_product)
+    elif visual == "Card":
+        st.metric("Gross margin", f"AED {sales['GrossMargin'].sum():,.0f}", f"{sales['GrossMargin'].sum()/sales['NetAmount'].sum():.1%} of sales")
+    elif visual == "Matrix / table":
+        matrix = pd.pivot_table(sales, index="Region", columns="Category", values="NetAmount", aggfunc="sum", fill_value=0, margins=True)
+        st.dataframe(matrix.style.format("AED {:,.0f}"), use_container_width=True)
+    else:
+        customers = sales.groupby("Customer", as_index=False).agg(NetSales=("NetAmount", "sum"), GrossMargin=("GrossMargin", "sum"), Transactions=("InvoiceID", "nunique"))
+        st.scatter_chart(customers, x="NetSales", y="GrossMargin", size="Transactions", color="#177c72")
+        st.dataframe(customers, hide_index=True, use_container_width=True)
+    if visual == recommendations[question]:
+        st.success("The selected visual fits the question's comparison structure.")
+    else:
+        st.warning(f"This visual can display the data, but {recommendations[question]} is the clearer starting point for the selected question.")
+    st.download_button("Download visual-design sample (.csv)", sales.to_csv(index=False), "visual-design-practice.csv", "text/csv", key="visual_download", use_container_width=True)
+
+
+def detailed_report_experience_lab() -> None:
+    lab_banner("Interactive report-experience laboratory", "Move from executive overview to performance driver to transaction evidence while preserving the selected business context.")
+    model = sample_model_tables()
+    sales = model["Sales"].merge(model["Product"][["ProductKey", "Product", "Category"]], on="ProductKey").merge(model["Customer"][["CustomerKey", "Customer", "Region"]], on="CustomerKey")
+    page = st.segmented_control("Report page", ["Executive overview", "Margin drivers", "Transaction evidence"], default="Executive overview", key="report_page")
+    region = st.selectbox("Persistent region filter", ["All regions", "Dubai", "Sharjah", "Ajman"], key="report_region")
+    filtered = sales if region == "All regions" else sales[sales["Region"] == region]
+    pages = ["Executive overview", "Margin drivers", "Transaction evidence"]
+    path_html = "".join(f'<div class="{"active" if item == page else ""}"><b>{index + 1}. {item}</b><span>{"Current page" if item == page else "Available next step"}</span></div>' for index, item in enumerate(pages))
+    st.markdown(f'<div class="report-path">{path_html}</div>', unsafe_allow_html=True)
+    if page == "Executive overview":
+        metrics = st.columns(3)
+        metrics[0].metric("Net sales", f"AED {filtered['NetAmount'].sum():,.0f}")
+        metrics[1].metric("Gross margin", f"AED {filtered['GrossMargin'].sum():,.0f}")
+        metrics[2].metric("Margin %", f"{filtered['GrossMargin'].sum()/filtered['NetAmount'].sum():.1%}")
+        monthly = filtered.assign(Month=filtered["InvoiceDate"].dt.to_period("M").astype(str)).groupby("Month", as_index=True)["NetAmount"].sum()
+        st.line_chart(monthly)
+        st.info("Overview answers what happened. Select Margin drivers to explain why, then Transaction evidence to validate the detail.")
+    elif page == "Margin drivers":
+        drivers = filtered.groupby(["Category", "Product"], as_index=False)[["NetAmount", "GrossMargin"]].sum().sort_values("GrossMargin")
+        st.bar_chart(drivers.set_index("Product")[["NetAmount", "GrossMargin"]])
+        st.dataframe(drivers, hide_index=True, use_container_width=True)
+        st.info("Driver analysis compares contribution and margin. The selected region filter remains active across the page journey.")
+    else:
+        customers = ["All customers"] + sorted(filtered["Customer"].unique().tolist())
+        customer = st.selectbox("Drillthrough customer", customers, key="report_customer")
+        evidence = filtered if customer == "All customers" else filtered[filtered["Customer"] == customer]
+        st.dataframe(evidence[["InvoiceID", "InvoiceDate", "Customer", "Region", "Product", "Quantity", "NetAmount", "GrossMargin"]], hide_index=True, use_container_width=True)
+        st.caption(f"Drillthrough context: {region} · {customer}. Export retains the visible evidence population.")
+    st.download_button("Download report-experience practice data (.csv)", sales.to_csv(index=False), "report-experience-practice.csv", "text/csv", key="report_download", use_container_width=True)
+
+
+def detailed_m_lab() -> None:
+    lab_banner("Interactive M language and parameter laboratory", "Change the folder parameter and transformation function to see how one reusable query processes a recurring set of files.")
+    files = [
+        ("Sales_Jan.csv", pd.DataFrame({"InvoiceID": ["J-101", "J-102"], "Region": ["Dubai", "Sharjah"], "Amount": [4200, 6100], "InternalNote": ["review", "ok"]})),
+        ("Sales_Feb.csv", pd.DataFrame({"InvoiceID": ["F-201", "F-202", "F-203"], "Region": ["Ajman", "Dubai", "Sharjah"], "Amount": [2900, 7400, 5300], "InternalNote": ["ok", "priority", "ok"]})),
+        ("Sales_Mar.csv", pd.DataFrame({"InvoiceID": ["M-301", "M-302"], "Region": ["Dubai", "Ajman"], "Amount": [8800, 3600], "InternalNote": ["priority", "review"]})),
+    ]
+    folder_path = st.text_input("Folder parameter", "C:/PowerBITraining/MonthlySales", key="m_folder_path")
+    use_function = st.toggle("Invoke a reusable TransformFile function for every file", value=True, key="m_use_function")
+    keep_columns = st.multiselect("Columns returned by the function", ["InvoiceID", "Region", "Amount", "InternalNote"], default=["InvoiceID", "Region", "Amount"], key="m_keep_columns")
+    processed = []
+    for filename, table in files if use_function else files[:1]:
+        part = table[keep_columns].copy() if keep_columns else pd.DataFrame(index=table.index)
+        part.insert(0, "Source.Name", filename)
+        processed.append(part)
+    combined = pd.concat(processed, ignore_index=True) if processed else pd.DataFrame()
+    process_strip(
+        [
+            ("Folder parameter", folder_path, "active"),
+            ("Folder.Files", f"{len(files)} visible CSV files", "active"),
+            ("TransformFile", "Invoked per binary" if use_function else "Not invoked · first file only", "active" if use_function else "warning"),
+            ("Combined query", f"{len(combined)} rows returned", "active"),
+        ]
+    )
+    inventory = pd.DataFrame({"Name": [name for name, _ in files], "Rows": [len(table) for _, table in files], "Extension": [".csv"] * len(files), "Hidden": [False] * len(files)})
+    left, right = st.columns([.8, 1.2])
+    with left:
+        st.markdown("#### Folder inventory")
+        st.dataframe(inventory, hide_index=True, use_container_width=True)
+    with right:
+        st.markdown("#### Live combined output")
+        st.dataframe(combined, hide_index=True, use_container_width=True)
+    m_code = f'''let
+    SourcePath = "{folder_path}",
+    Source = Folder.Files(SourcePath),
+    VisibleFiles = Table.SelectRows(Source, each [Attributes]?[Hidden]? <> true),
+    Transformed = Table.AddColumn(VisibleFiles, "Data", each TransformFile([Content])),
+    Combined = Table.Combine(Transformed[Data])
+in
+    Combined'''
+    st.code(m_code, language="powerquery")
+    st.info("The parameter makes the source portable; the custom function guarantees that the same transformation is applied to every current and future file.")
+    st.download_button("Download M folder practice files (.zip)", dataframes_zip(files), "m-language-folder-practice.zip", "application/zip", key="m_download", use_container_width=True)
+
+
+def detailed_audit_analytics_lab() -> None:
+    lab_banner("Interactive audit analytics laboratory", "Adjust the anomaly concentration and investigation threshold. The Benford comparison, risk signals and transaction evidence update together.")
+    transaction_count = st.select_slider("Transaction population", options=[300, 600, 1200, 2400], value=600, key="audit_population")
+    anomaly = st.slider("Injected concentration on first digit 9", 0, 30, 8, key="audit_anomaly")
+    threshold = st.slider("Investigation threshold · percentage-point deviation", 2.0, 10.0, 4.0, 0.5, key="audit_threshold")
+    expected = {digit: math.log10(1 + 1 / digit) for digit in range(1, 10)}
+    rng = random.Random(420 + transaction_count + anomaly)
+    vendors = ["Alpha Supplies", "Beacon LLC", "Crescent Trading", "Delta Services", "Emirates Office"]
+    rows = []
+    probabilities = list(expected.values())
+    digits = list(expected)
+    for index in range(transaction_count):
+        digit = rng.choices(digits, weights=probabilities, k=1)[0]
+        if rng.random() < anomaly / 100:
+            digit = 9
+        magnitude = rng.choice([10, 100, 1000, 10000])
+        amount = digit * magnitude + rng.uniform(0, magnitude - 0.01)
+        rows.append([f"TX-{index + 1:05d}", rng.choice(vendors), round(amount, 2), digit])
+    transactions = pd.DataFrame(rows, columns=["TransactionID", "Vendor", "Amount", "FirstDigit"])
+    observed = transactions["FirstDigit"].value_counts(normalize=True).reindex(range(1, 10), fill_value=0)
+    comparison = pd.DataFrame({"Observed": observed, "Expected": pd.Series(expected)})
+    comparison.index.name = "First digit"
+    comparison["Deviation_pp"] = (comparison["Observed"] - comparison["Expected"]) * 100
+    flagged_digits = comparison.index[comparison["Deviation_pp"].abs() >= threshold].tolist()
+    transactions["RiskSignal"] = transactions["FirstDigit"].map(lambda digit: "Review" if digit in flagged_digits else "Normal range")
+    process_strip(
+        [
+            ("Population", f"{transaction_count:,} transactions", "active"),
+            ("First digit", "Derived from absolute amount", "active"),
+            ("Expected pattern", "Benford distribution", "active"),
+            ("Investigation", f"{len(flagged_digits)} digits above threshold", "warning" if flagged_digits else "active"),
+        ]
+    )
+    chart_col, table_col = st.columns([1.05, .95])
+    with chart_col:
+        st.markdown("#### Observed versus expected distribution")
+        st.bar_chart(comparison[["Observed", "Expected"]])
+        st.dataframe(comparison.style.format({"Observed": "{:.1%}", "Expected": "{:.1%}", "Deviation_pp": "{:+.1f}"}), use_container_width=True)
+    with table_col:
+        st.markdown("#### Transaction evidence")
+        digit_filter = st.selectbox("Inspect first digit", ["Flagged digits"] + list(range(1, 10)), key="audit_digit")
+        if digit_filter == "Flagged digits":
+            evidence = transactions[transactions["FirstDigit"].isin(flagged_digits)]
+        else:
+            evidence = transactions[transactions["FirstDigit"] == digit_filter]
+        st.dataframe(evidence.head(80), hide_index=True, use_container_width=True)
+        st.caption(f"Evidence rows shown: {min(len(evidence),80)} of {len(evidence)}. A risk signal prioritises review; it does not prove fraud or error.")
+    st.download_button("Download current audit population (.csv)", transactions.to_csv(index=False), "benford-audit-population.csv", "text/csv", key="audit_download", use_container_width=True)
+
+
+def detailed_governance_lab() -> None:
+    lab_banner("Interactive deployment, refresh and RLS laboratory", "Choose a source and user role to simulate the gateway path, workspace deployment and rows visible after row-level security.")
+    model = sample_model_tables()
+    sales = model["Sales"].merge(model["Customer"][["CustomerKey", "Customer", "Region"]], on="CustomerKey")
+    source = st.selectbox("Production source", ["Cloud data warehouse", "On-premises SQL Server", "Local network file"], key="gov_source")
+    role = st.selectbox("Test as role", ["Finance Admin", "Dubai Manager", "Sharjah Manager", "Ajman Manager", "Unassigned Viewer"], key="gov_role")
+    refresh = st.selectbox("Refresh frequency", ["Daily at 6 AM", "Every 4 hours", "Manual only"], key="gov_refresh")
+    needs_gateway = source != "Cloud data warehouse"
+    role_region = {"Dubai Manager": "Dubai", "Sharjah Manager": "Sharjah", "Ajman Manager": "Ajman"}.get(role)
+    visible = sales if role == "Finance Admin" else sales[sales["Region"] == role_region] if role_region else sales.iloc[0:0]
+    steps = [
+        ("Source", source, "warning" if needs_gateway else ""),
+        ("Gateway", "Required and must be online" if needs_gateway else "Cloud connection · no gateway", "warning" if needs_gateway else ""),
+        ("Workspace", f"Semantic model · {refresh}", ""),
+        ("RLS role", f"{role} · {len(visible)} visible rows", "warning" if role == "Unassigned Viewer" else ""),
+    ]
+    governance_html = "".join(f'<div class="governance-step {state}"><b>{title}</b><span>{subtitle}</span></div>' for title, subtitle, state in steps)
+    st.markdown(f'<div class="governance-grid">{governance_html}</div>', unsafe_allow_html=True)
+    metrics = st.columns(3)
+    metrics[0].metric("Gateway", "Required" if needs_gateway else "Not required")
+    metrics[1].metric("Rows visible", len(visible), f"of {len(sales)}")
+    metrics[2].metric("Visible net sales", f"AED {visible['NetAmount'].sum():,.0f}")
+    mapping = pd.DataFrame({"Role": ["Finance Admin", "Dubai Manager", "Sharjah Manager", "Ajman Manager"], "Region filter": ["All", "Dubai", "Sharjah", "Ajman"], "Example assignment": ["finance-admins@company.com", "dubai-managers@company.com", "sharjah-managers@company.com", "ajman-managers@company.com"]})
+    map_tab, visible_tab = st.tabs(["Security mapping", "View as role · visible rows"])
+    with map_tab:
+        st.dataframe(mapping, hide_index=True, use_container_width=True)
+    with visible_tab:
+        st.dataframe(visible[["InvoiceID", "InvoiceDate", "Customer", "Region", "NetAmount"]], hide_index=True, use_container_width=True)
+    if role == "Unassigned Viewer":
+        st.warning("The test user has no approved region mapping and therefore sees zero rows. Workspace access and RLS assignment must both be validated before release.")
+    else:
+        st.info("Use View as role in Desktop, then test assigned users in the Service. RLS controls model rows; workspace permission controls access to the content.")
+    st.download_button("Download governance and RLS practice pack (.zip)", dataframes_zip([("Sales.csv", sales), ("SecurityMapping.csv", mapping)]), "governance-rls-practice.zip", "application/zip", key="gov_download", use_container_width=True)
+
+
+def detailed_capstone_lab() -> None:
+    lab_banner("Interactive management capstone laboratory", "Bring transformation, modelling, DAX, visual analysis, controls and management storytelling into one reconciled delivery.")
+    model = sample_model_tables()
+    sales = model["Sales"].merge(model["Customer"][["CustomerKey", "Customer", "Region"]], on="CustomerKey").merge(model["Product"][["ProductKey", "Product", "Category"]], on="ProductKey")
+    region = st.selectbox("Management scope", ["All regions", "Dubai", "Sharjah", "Ajman"], key="capstone_region")
+    inject_difference = st.toggle("Introduce an unreconciled AED 750 adjustment", key="capstone_difference")
+    controls = ["Sources transformed", "Star schema validated", "Measures tested", "Exceptions traced", "Totals reconciled", "Management story rehearsed"]
+    st.markdown("**Completed delivery controls**")
+    completed_controls = []
+    control_columns = st.columns(2)
+    for index, control in enumerate(controls):
+        if control_columns[index % 2].checkbox(control, value=index < 3, key=f"capstone_control_{index}"):
+            completed_controls.append(control)
+    visible = sales if region == "All regions" else sales[sales["Region"] == region]
+    source_total = visible["NetAmount"].sum()
+    model_total = source_total - (750 if inject_difference else 0)
+    reconciliation_difference = source_total - model_total
+    actual_by_region = sales.groupby("Region", as_index=False)["NetAmount"].sum().rename(columns={"NetAmount": "Actual"})
+    performance = actual_by_region.merge(model["Budget"], on="Region", how="left")
+    performance["Variance"] = performance["Actual"] - performance["Budget"]
+    process_strip(
+        [
+            ("Prepare", "Power Query and source controls", "active" if controls[0] in completed_controls else ""),
+            ("Model", "Relationships and DAX", "active" if controls[1] in completed_controls and controls[2] in completed_controls else ""),
+            ("Validate", f"Difference AED {reconciliation_difference:,.0f}", "warning" if reconciliation_difference else "active"),
+            ("Present", "Five-minute management story", "active" if controls[-1] in completed_controls else ""),
+        ]
+    )
+    metrics = st.columns(4)
+    metrics[0].metric("Net sales", f"AED {model_total:,.0f}")
+    metrics[1].metric("Gross margin", f"AED {visible['GrossMargin'].sum():,.0f}")
+    metrics[2].metric("Reconciliation difference", f"AED {reconciliation_difference:,.0f}")
+    metrics[3].metric("Readiness", f"{len(completed_controls)}/{len(controls)}")
+    left, right = st.columns([1.05, .95])
+    with left:
+        st.markdown("#### Actual versus budget")
+        st.bar_chart(performance.set_index("Region")[["Actual", "Budget"]])
+        st.dataframe(performance.style.format({"Actual": "AED {:,.0f}", "Budget": "AED {:,.0f}", "Variance": "AED {:+,.0f}"}), hide_index=True, use_container_width=True)
+    with right:
+        st.markdown("#### Management narrative")
+        top = performance.sort_values("Variance", ascending=False).iloc[0]
+        weak = performance.sort_values("Variance").iloc[0]
+        st.markdown(f'<div class="lab-summary"><b>Headline</b><p>{top["Region"]} has the strongest variance at AED {top["Variance"]:+,.0f}; {weak["Region"]} requires attention at AED {weak["Variance"]:+,.0f}. Management should validate product mix, margin contribution and the supporting transactions before action.</p></div>', unsafe_allow_html=True)
+        st.dataframe(visible[["InvoiceID", "InvoiceDate", "Customer", "Region", "Product", "NetAmount", "GrossMargin"]], hide_index=True, use_container_width=True)
+    if reconciliation_difference:
+        st.error("Capstone control failed: the model does not reconcile to the filtered source total. Resolve the AED 750 difference before presenting any conclusion.")
+    elif len(completed_controls) < len(controls):
+        st.warning("Totals reconcile, but the delivery checklist is incomplete. Finish the remaining controls before sign-off.")
+    else:
+        st.success("Capstone ready: the model reconciles, evidence is traceable and the management story has been rehearsed.")
+    st.download_button("Download capstone practice pack (.zip)", dataframes_zip([(f"{name}.csv", table) for name, table in model.items()]), "power-bi-capstone-practice.zip", "application/zip", key="capstone_download", use_container_width=True)
+
+
+def detailed_module_lab(lab_id: int) -> None:
+    labs = {
+        1: detailed_workflow_lab,
+        2: detailed_connection_lab,
+        3: detailed_power_query_lab,
+        5: detailed_model_lab,
+        6: detailed_dax_lab,
+        7: detailed_visual_lab,
+        8: detailed_report_experience_lab,
+        9: detailed_m_lab,
+        10: detailed_audit_analytics_lab,
+        11: detailed_governance_lab,
+        12: detailed_capstone_lab,
+    }
+    if lab_id == 4:
+        append_tab, merge_tab = st.tabs(["Append Queries · Stack rows", "Merge Queries · Match keys"])
+        with append_tab:
+            detailed_append_lab()
+        with merge_tab:
+            detailed_merge_lab()
+    else:
+        labs[lab_id]()
+
+
 def interactive_lab() -> None:
     page_header("See it, then build it", "Power BI guided lab", "Choose a topic to study the relevant Power BI screen, follow the exact click path and reproduce the technique in the supplied practice file.")
     labels = {f"{m['code']} · {m['title']}": m for m in MODULES}
@@ -824,15 +1413,13 @@ def interactive_lab() -> None:
     st.markdown(f"### {selected['title']}")
     lab_id = selected["id"]
     guide = TOOL_LABS[lab_id]
+    detailed_module_lab(lab_id)
+    st.divider()
+    st.subheader("Power BI screen reference")
     if lab_id == 4:
-        append_tab, merge_tab = st.tabs(["Append Queries · Stack rows", "Merge Queries · Match keys"])
-        with append_tab:
-            detailed_append_lab()
-        with merge_tab:
-            detailed_merge_lab()
-        st.divider()
-        st.subheader("Power BI screen reference")
         st.caption("The interactive labs above carry the detailed explanation; these source captures show where both commands appear in Power Query.")
+    else:
+        st.caption("The live laboratory above explains the concept with sample data; this source capture shows where the corresponding feature appears in Power BI.")
     st.subheader(guide["screen_title"])
     screen_tabs = st.tabs([screen[0] for screen in guide["screens"]]) if len(guide["screens"]) > 1 else [st.container()]
     for tab, (label, filename, caption, notices) in zip(screen_tabs, guide["screens"]):
@@ -909,7 +1496,10 @@ def interactive_lab() -> None:
     elif lab_id == 5:
         duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension")
         st.write("Relationship: **Product (one) → Sales (many)**" if not duplicate else "Relationship cannot remain one-to-many because the dimension key is no longer unique.")
-        st.success("Clean star schema: filtering is predictable.") if not duplicate else st.error("Control failed: deduplicate or create a valid business key before relating tables.")
+        if duplicate:
+            st.error("Control failed: deduplicate or create a valid business key before relating tables.")
+        else:
+            st.success("Clean star schema: filtering is predictable.")
     elif lab_id == 6:
         country = st.selectbox("Country filter", ["All", "UAE", "KSA", "Oman"])
         sales = {"All": 1_250_000, "UAE": 610_000, "KSA": 420_000, "Oman": 220_000}[country]
