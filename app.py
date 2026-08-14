@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
+import base64
 import math
 import random
 
@@ -16,6 +17,28 @@ APP_DIR = Path(__file__).parent
 DOWNLOAD_DIR = APP_DIR / "assets" / "downloads"
 SCREENSHOT_DIR = APP_DIR / "assets" / "screenshots"
 PASS_SCORE = 14
+ASSESSMENT_EXPLANATIONS = [
+    "Power BI Desktop is the primary authoring environment for connections, transformations, modelling, DAX and report design.",
+    "Grain states exactly what one row represents. It must be understood before keys, relationships or calculations are designed.",
+    "Import stores a compressed copy in the Power BI model and is normally the fastest interactive starting point for modest datasets.",
+    "Unpivot reshapes repeating columns into attribute-value rows, producing a scalable analytical structure.",
+    "Append stacks compatible tables vertically and therefore adds rows; Merge matches keys to add related columns.",
+    "A Left Anti join returns rows from the first, or primary, table that have no matching key in the second table.",
+    "Transaction amounts and other event-level numeric observations normally belong in the fact table.",
+    "A dimension key must be unique on the one side; the Sales fact table can repeat that ProductKey on the many side.",
+    "A complete dedicated date table supports consistent calendar filtering, sorting and time-intelligence calculations.",
+    "CALCULATE evaluates an expression after modifying filter context.",
+    "DIVIDE handles zero or blank denominators safely and is preferred to the division operator for business ratios.",
+    "A measure is calculated at query time within the filter context created by the report, visual and user selections.",
+    "A line chart preserves sequence and makes change over time easy to compare.",
+    "Drillthrough carries the selected entity or category context to a page designed for supporting detail.",
+    "In a Power Query let/in expression, the expression after `in` is the value returned by the query.",
+    "A custom M function packages repeatable transformation logic and accepts parameters for reuse across files or entities.",
+    "Benford deviation is a risk signal that prioritises investigation; it does not prove fraud or error by itself.",
+    "An enterprise gateway securely connects the Power BI Service to supported on-premises sources for refresh or query execution.",
+    "Row-level security filters the model rows available to a user or role; it does not replace workspace permissions.",
+    "A defensible capstone requires reconciliation of totals, filter behaviour, edge cases and representative transactions.",
+]
 
 st.set_page_config(
     page_title="Power BI Learning Studio",
@@ -107,6 +130,66 @@ def inject_styles() -> None:
         .retained-row__label b { color:var(--ink); font-family:'Libre Baskerville'; font-size:.9rem; }
         .retained-track { height:13px; overflow:hidden; background:#edf0ee; border-radius:3px; }
         .retained-track span { display:block; height:100%; min-width:0; border-radius:3px; transition:width .25s ease; }
+        .assessment-hero { display:grid; grid-template-columns:1.25fr .75fr; gap:2rem; align-items:center; background:radial-gradient(circle at 88% 18%,rgba(201,150,82,.24),transparent 34%),linear-gradient(135deg,#102933,var(--ink)); color:white; padding:2.1rem 2.35rem; border-radius:10px; margin-bottom:1.35rem; box-shadow:0 14px 34px rgba(12,27,36,.12); }
+        .assessment-hero h2 { color:white; margin:.3rem 0 .65rem; font-size:clamp(1.65rem,2.4vw,2.45rem); }
+        .assessment-hero p { color:#bfd0cf; margin:0; line-height:1.6; }
+        .assessment-kpis { display:grid; grid-template-columns:repeat(2,1fr); gap:.65rem; }
+        .assessment-kpi { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:7px; padding:.8rem .9rem; }
+        .assessment-kpi strong { display:block; color:#f3d8ae; font-family:'Libre Baskerville'; font-size:1.25rem; }
+        .assessment-kpi span { color:#aebfbe; font-size:.68rem; text-transform:uppercase; letter-spacing:.09em; }
+        .question-status { display:flex; justify-content:space-between; gap:1rem; align-items:center; padding:.8rem 1rem; background:#edf3f1; border-left:4px solid var(--teal); border-radius:0 6px 6px 0; margin-bottom:1rem; color:#47615f; font-size:.83rem; }
+        .question-status b { color:var(--ink); }
+        .question-card-head { padding:1.15rem 1.2rem .55rem; background:white; border:1px solid var(--line); border-bottom:0; border-radius:8px 8px 0 0; }
+        .question-card-head h2 { font-size:1.45rem; line-height:1.42; margin:.35rem 0 .25rem; }
+        .question-card-head span { color:var(--teal); font-size:.68rem; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+        [data-testid="stMain"] [data-testid="stRadio"] > div { gap:.32rem; }
+        [data-testid="stMain"] [data-testid="stRadio"] label { background:white; border:1px solid var(--line); border-radius:6px; padding:.72rem .9rem; margin:.12rem 0; transition:.16s ease; }
+        [data-testid="stMain"] [data-testid="stRadio"] label:hover { border-color:#8bb8b1; background:#f7fbfa; }
+        [data-testid="stMain"] [data-testid="stRadio"] label:has(input:checked) { border-color:var(--teal); background:#eaf4f1; box-shadow:inset 3px 0 var(--teal); }
+        .answer-feedback { padding:1rem 1.1rem; margin:.85rem 0; border-radius:7px; border:1px solid; }
+        .answer-feedback strong { display:block; margin-bottom:.3rem; }
+        .answer-feedback.correct { background:#edf8f1; border-color:#aad2bb; color:#245d3e; }
+        .answer-feedback.incorrect { background:#fff4ef; border-color:#e8bdad; color:#863d2b; }
+        .answer-feedback p { color:#526468; margin:.35rem 0 0; line-height:1.55; }
+        .result-panel { display:grid; grid-template-columns:auto 1fr; gap:1.8rem; align-items:center; background:linear-gradient(135deg,#102933,var(--ink)); color:white; border-radius:10px; padding:2rem 2.3rem; margin-bottom:1.3rem; }
+        .result-ring { width:132px; height:132px; display:grid; place-content:center; text-align:center; border:8px solid var(--gold); border-radius:50%; background:#183743; }
+        .result-ring strong { display:block; color:white; font-family:'Libre Baskerville'; font-size:2rem; line-height:1; }
+        .result-ring span { color:#b7c8c7; font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; margin-top:.35rem; }
+        .result-panel h2 { color:white; margin:.2rem 0 .45rem; }
+        .result-panel p { color:#bfd0cf; margin:0; }
+        .day-result-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; margin:1rem 0 1.4rem; }
+        .day-result { background:white; border:1px solid var(--line); border-top:4px solid var(--teal); border-radius:7px; padding:1rem; }
+        .day-result strong { display:block; color:var(--ink); font-family:'Libre Baskerville'; font-size:1.25rem; }
+        .day-result span { color:var(--muted); font-size:.75rem; }
+        .trainer-hero { display:grid; grid-template-columns:.78fr 1.42fr; gap:1.25rem; align-items:stretch; }
+        .trainer-photo { background:#e9edeb; border:1px solid var(--line); border-radius:10px; overflow:hidden; min-height:520px; }
+        .trainer-photo img { display:block; width:100%; height:100%; min-height:520px; object-fit:cover; object-position:center top; }
+        .trainer-copy { background:radial-gradient(circle at 90% 10%,rgba(201,150,82,.22),transparent 35%),linear-gradient(135deg,#102933,var(--ink)); color:white; padding:2.35rem 2.45rem; border-radius:10px; min-height:100%; }
+        .trainer-copy h2 { color:white; font-size:clamp(2rem,3vw,3.2rem); line-height:1.08; margin:.55rem 0 1rem; }
+        .trainer-copy p { color:#bfd0cf; line-height:1.7; }
+        .trainer-copy .trainer-role { color:#f3d8ae; font-weight:700; }
+        .trainer-links { display:flex; flex-wrap:wrap; gap:.55rem; margin-top:1.25rem; }
+        .trainer-links a { color:white !important; text-decoration:none; border:1px solid rgba(255,255,255,.22); border-radius:5px; padding:.62rem .78rem; font-size:.76rem; font-weight:700; }
+        .trainer-links a:hover { color:#f3d8ae !important; border-color:var(--gold); }
+        .trainer-stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.8rem; margin:1.4rem 0 2rem; }
+        .trainer-stat { background:white; border:1px solid var(--line); border-top:4px solid var(--gold); border-radius:7px; padding:1rem; }
+        .trainer-stat strong { display:block; color:var(--ink); font-family:'Libre Baskerville'; font-size:1.55rem; }
+        .trainer-stat span { color:var(--muted); font-size:.73rem; line-height:1.35; }
+        .award-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.85rem; margin:.9rem 0 2rem; }
+        .award-card { position:relative; background:white; border:1px solid var(--line); border-radius:8px; padding:1.15rem 1.15rem 1.15rem 4.7rem; min-height:118px; }
+        .award-year { position:absolute; left:1rem; top:1.15rem; color:var(--gold); font-family:'Libre Baskerville'; font-size:1.3rem; }
+        .award-card b { color:var(--ink); display:block; margin-bottom:.35rem; }
+        .award-card p { color:var(--muted); font-size:.79rem; line-height:1.45; margin:0; }
+        .experience-line { border-left:2px solid #c8d8d4; margin:.8rem 0 2rem .55rem; padding-left:1.4rem; }
+        .experience-item { position:relative; padding:.2rem 0 1.15rem; }
+        .experience-item:before { content:''; position:absolute; width:11px; height:11px; border-radius:50%; background:var(--gold); left:-1.82rem; top:.48rem; box-shadow:0 0 0 4px #f3f5f3; }
+        .experience-item b { color:var(--ink); }
+        .experience-item span { display:block; color:var(--teal); font-size:.7rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; margin-bottom:.22rem; }
+        .experience-item p { color:var(--muted); font-size:.83rem; margin:.25rem 0 0; line-height:1.5; }
+        .expertise-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.8rem; margin:.9rem 0 1.5rem; }
+        .expertise-card { background:white; border:1px solid var(--line); border-radius:7px; padding:1rem; }
+        .expertise-card b { color:var(--ink); display:block; margin-bottom:.35rem; }
+        .expertise-card p { color:var(--muted); font-size:.78rem; line-height:1.45; margin:0; }
         div[data-testid="stProgress"] > div > div > div { background-color:var(--gold); }
         .stButton > button, .stDownloadButton > button { border-radius:6px; border:1px solid var(--line); font-weight:700; min-height:42px; }
         .stButton > button:hover, .stDownloadButton > button:hover { border-color:var(--teal); color:var(--teal); }
@@ -117,8 +200,8 @@ def inject_styles() -> None:
         div[data-testid="stDataFrame"] { border:1px solid var(--line); border-radius:7px; overflow:hidden; }
         div[data-baseweb="select"] > div, .stTextInput input, .stNumberInput input { border-radius:6px; }
         div[data-testid="stAlert"] { border-radius:7px; }
-        @media(max-width:900px){.hero{grid-template-columns:1fr;padding:2.6rem}.journey-wheel{display:none}.metric-row{grid-template-columns:repeat(2,1fr)}.merge-flow{grid-template-columns:1fr}.merge-arrows{transform:rotate(90deg);padding:.25rem}}
-        @media(max-width:560px){.metric-row{grid-template-columns:1fr}.block-container{padding:4.5rem 1rem 3rem}.hero{padding:2rem 1.35rem}.page-intro{display:block}.page-intro h1{font-size:2rem}}
+        @media(max-width:900px){.hero,.assessment-hero,.trainer-hero{grid-template-columns:1fr}.hero,.assessment-hero{padding:2.6rem}.journey-wheel{display:none}.metric-row,.trainer-stat-grid{grid-template-columns:repeat(2,1fr)}.merge-flow{grid-template-columns:1fr}.merge-arrows{transform:rotate(90deg);padding:.25rem}.expertise-grid{grid-template-columns:1fr}.award-grid{grid-template-columns:1fr}.trainer-photo,.trainer-photo img{min-height:0;max-height:520px}}
+        @media(max-width:560px){.metric-row,.trainer-stat-grid,.day-result-grid{grid-template-columns:1fr}.block-container{padding:4.5rem 1rem 3rem}.hero,.assessment-hero,.trainer-copy{padding:2rem 1.35rem}.page-intro{display:block}.page-intro h1{font-size:2rem}.result-panel{grid-template-columns:1fr;text-align:center}.result-ring{margin:auto}.award-card{padding-left:1rem;padding-top:3.6rem}.award-year{top:1rem}}
         </style>
         """,
         unsafe_allow_html=True,
@@ -130,6 +213,11 @@ def setup_state() -> None:
         "learner_name": "",
         "completed": set(),
         "quiz_result": None,
+        "assessment_latest_score": None,
+        "assessment_answers": {},
+        "assessment_index": 0,
+        "assessment_complete": False,
+        "assessment_history": [],
         "nav": "Learning home",
     }
     for key, value in defaults.items():
@@ -160,8 +248,8 @@ def sidebar() -> str:
         st.progress(progress_value(), text=f"Course progress · {pct}%")
         result = st.session_state.quiz_result
         if result is not None:
-            st.caption(f"Assessment · {result}/20")
-        pages = ["Learning home", "Curriculum", "Three-day plan", "Interactive lab", "Assessment", "Resources", "Certificate"]
+            st.caption(f"Best assessment · {result}/20")
+        pages = ["Learning home", "Curriculum", "Three-day plan", "Interactive lab", "Assessment", "About the Trainer", "Resources", "Certificate"]
         page = st.radio("Explore", pages, label_visibility="collapsed", key="nav")
         st.divider()
         st.caption("Developed by CA Pradeep Gujaran")
@@ -625,32 +713,280 @@ def interactive_lab() -> None:
         st.progress(done / len(controls), text=f"Capstone readiness · {done}/{len(controls)} controls")
 
 
+def assessment_grade(percentage: int) -> str:
+    if percentage >= 90:
+        return "Distinction"
+    if percentage >= 80:
+        return "Excellent"
+    if percentage >= 70:
+        return "Pass"
+    return "Needs review"
+
+
+def reset_assessment() -> None:
+    st.session_state.assessment_answers = {}
+    st.session_state.assessment_index = 0
+    st.session_state.assessment_complete = False
+    st.session_state.assessment_latest_score = None
+    for key in list(st.session_state):
+        if key.startswith("assessment_choice_"):
+            del st.session_state[key]
+
+
+def assessment_results() -> None:
+    answers = st.session_state.assessment_answers
+    score = st.session_state.assessment_latest_score or 0
+    percentage = round(score / len(ASSESSMENT) * 100)
+    grade = assessment_grade(percentage)
+    passed = score >= PASS_SCORE
+    message = "Certificate threshold achieved" if passed else "Review the missed concepts, then try again"
+    st.markdown(
+        f"""
+        <div class="result-panel">
+          <div class="result-ring"><strong>{percentage}%</strong><span>{score} of {len(ASSESSMENT)}</span></div>
+          <div><span class="eyebrow">Assessment complete</span><h2>{grade}</h2><p>{message}. Your best score remains available in the sidebar and certificate area.</p></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if passed:
+        st.success("You passed the assessment. Complete every learning module to unlock the personalized certificate.")
+    else:
+        st.error(f"The pass mark is {PASS_SCORE}/{len(ASSESSMENT)}. Use the review below to target your next attempt.")
+
+    day_ranges = [("Day 1 · Prepare", 0, 6), ("Day 2 · Model", 6, 14), ("Day 3 · Scale", 14, 20)]
+    cards = []
+    for label, start, end in day_ranges:
+        day_score = sum(answers.get(i) == ASSESSMENT[i][2] for i in range(start, end))
+        cards.append(f'<div class="day-result"><strong>{day_score}/{end-start}</strong><span>{label}</span></div>')
+    st.markdown(f'<div class="day-result-grid">{"".join(cards)}</div>', unsafe_allow_html=True)
+
+    wrong = [i for i in range(len(ASSESSMENT)) if answers.get(i) != ASSESSMENT[i][2]]
+    st.subheader("Answer review")
+    if not wrong:
+        st.info("Perfect score — every answer was correct.")
+    else:
+        for i in wrong:
+            question, options, correct = ASSESSMENT[i]
+            chosen = options[answers[i]]
+            with st.expander(f"Question {i + 1} · {question}"):
+                st.markdown(f"**Your answer:** {chosen}  \n**Correct answer:** {options[correct]}")
+                st.info(ASSESSMENT_EXPLANATIONS[i])
+
+    attempts = len(st.session_state.assessment_history)
+    st.caption(f"Attempts completed in this learning session · {attempts}")
+    c1, c2 = st.columns(2)
+    if c1.button("Retake assessment", type="primary", use_container_width=True):
+        reset_assessment()
+        st.rerun()
+    if c2.button("Review curriculum", use_container_width=True):
+        st.session_state.nav = "Curriculum"
+        st.rerun()
+
+
 def assessment() -> None:
-    page_header("Knowledge check", "Final assessment", "Answer all 20 questions. A score of 14 or more unlocks the certificate.")
-    with st.form("assessment_form"):
-        answers = []
-        for i, (question, options, _) in enumerate(ASSESSMENT, 1):
-            answers.append(st.radio(f"{i}. {question}", options, index=None, key=f"assessment_{i}"))
-        submitted = st.form_submit_button("Submit assessment", type="primary")
-    if submitted:
-        unanswered = sum(answer is None for answer in answers)
-        if unanswered:
-            st.warning(f"Please answer all questions. {unanswered} remaining.")
+    page_header("Knowledge check", "Final assessment", "Work through one focused question at a time. Each answer is locked and explained immediately so the assessment also becomes a learning experience.")
+    if st.session_state.assessment_complete:
+        assessment_results()
+        return
+
+    answers = dict(st.session_state.assessment_answers)
+    current = int(st.session_state.assessment_index)
+    total = len(ASSESSMENT)
+    answered = len(answers)
+    st.markdown(
+        f"""
+        <div class="assessment-hero">
+          <div><span class="eyebrow">CAP-style assessment studio</span><h2>Prove the full Power BI workflow</h2><p>Select one answer, study the immediate explanation, then continue. A score of {PASS_SCORE}/{total} unlocks the assessment requirement for your certificate.</p></div>
+          <div class="assessment-kpis">
+            <div class="assessment-kpi"><strong>{answered}/{total}</strong><span>Answered</span></div>
+            <div class="assessment-kpi"><strong>{PASS_SCORE}/{total}</strong><span>Pass target</span></div>
+            <div class="assessment-kpi"><strong>3</strong><span>Course days</span></div>
+            <div class="assessment-kpi"><strong>Locked</strong><span>After selection</span></div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.progress(answered / total, text=f"Assessment progress · {answered} of {total} answered")
+
+    nav_col, question_col = st.columns([0.72, 2.28], gap="large")
+    with nav_col:
+        st.markdown("#### Question navigator")
+        st.caption("A check mark means the answer is locked. Select any number to revisit its explanation.")
+        for row_start in range(0, total, 4):
+            row = st.columns(4)
+            for offset, col in enumerate(row):
+                i = row_start + offset
+                if i >= total:
+                    continue
+                label = f"✓{i + 1}" if i in answers else str(i + 1)
+                if col.button(label, key=f"assessment_nav_{i}", type="primary" if i == current else "secondary", use_container_width=True):
+                    st.session_state.assessment_index = i
+                    st.rerun()
+        remaining = total - answered
+        st.markdown(
+            f'<div class="question-status"><span><b>{remaining}</b> remaining</span><span><b>{answered}</b> locked</span></div>',
+            unsafe_allow_html=True,
+        )
+
+    with question_col:
+        question, options, correct = ASSESSMENT[current]
+        day = 1 if current < 6 else 2 if current < 14 else 3
+        st.markdown(
+            f'<div class="question-card-head"><span>Day {day} · Question {current + 1} of {total}</span><h2>{question}</h2></div>',
+            unsafe_allow_html=True,
+        )
+        stored = answers.get(current)
+        selected = st.radio(
+            "Choose one answer",
+            options,
+            index=stored if stored is not None else None,
+            key=f"assessment_choice_{current}",
+            disabled=stored is not None,
+            label_visibility="collapsed",
+        )
+        if selected is not None and stored is None:
+            answers[current] = options.index(selected)
+            st.session_state.assessment_answers = answers
+            st.rerun()
+
+        if stored is not None:
+            is_correct = stored == correct
+            tone = "correct" if is_correct else "incorrect"
+            heading = "Correct — well reasoned" if is_correct else f"Not quite — correct answer: {options[correct]}"
+            st.markdown(
+                f'<div class="answer-feedback {tone}"><strong>{heading}</strong><p>{ASSESSMENT_EXPLANATIONS[current]}</p></div>',
+                unsafe_allow_html=True,
+            )
         else:
-            score = sum(options.index(answer) == correct for answer, (_, options, correct) in zip(answers, ASSESSMENT))
-            st.session_state.quiz_result = score
+            st.caption("Select an answer to reveal the explanation. Your first selection is final for this attempt.")
+
+        previous_col, next_col = st.columns(2)
+        if previous_col.button("← Previous", disabled=current == 0, use_container_width=True):
+            st.session_state.assessment_index = current - 1
+            st.rerun()
+        if current < total - 1:
+            if next_col.button("Next question →", disabled=stored is None, type="primary", use_container_width=True):
+                st.session_state.assessment_index = current + 1
+                st.rerun()
+        elif answered < total:
+            first_unanswered = next(i for i in range(total) if i not in answers)
+            if next_col.button("Go to first unanswered", type="primary", use_container_width=True):
+                st.session_state.assessment_index = first_unanswered
+                st.rerun()
+        elif next_col.button("Finish assessment", type="primary", use_container_width=True):
+            score = sum(answers[i] == ASSESSMENT[i][2] for i in range(total))
+            st.session_state.assessment_latest_score = score
+            best = st.session_state.quiz_result
+            st.session_state.quiz_result = max(score, best) if best is not None else score
+            st.session_state.assessment_history.append({"score": score, "percentage": round(score / total * 100), "grade": assessment_grade(round(score / total * 100))})
+            st.session_state.assessment_complete = True
             if score >= PASS_SCORE:
                 st.balloons()
-                st.success(f"Passed · {score}/20. Your certificate is unlocked.")
-            else:
-                st.error(f"Score · {score}/20. Review the modules and try again; the pass mark is {PASS_SCORE}/20.")
-    if st.session_state.quiz_result is not None:
-        st.metric("Latest score", f"{st.session_state.quiz_result}/20", "Pass" if st.session_state.quiz_result >= PASS_SCORE else "Review required")
+            st.rerun()
 
 
 @st.cache_data(show_spinner=False)
 def load_download(filename: str) -> bytes:
     return (DOWNLOAD_DIR / filename).read_bytes()
+
+
+def trainer_profile() -> None:
+    page_header(
+        "Meet your trainer",
+        "About CA Pradeep Gujaran",
+        "A finance and audit leader who turns real business problems into practical learning experiences with Power BI, analytics, automation and applied AI.",
+    )
+    portrait = APP_DIR / "assets" / "trainer" / "pradeep-portrait.png"
+    portrait_data = base64.b64encode(portrait.read_bytes()).decode("ascii") if portrait.exists() else ""
+    photo_html = f'<div class="trainer-photo"><img src="data:image/png;base64,{portrait_data}" alt="CA Pradeep Gujaran portrait"></div>' if portrait_data else ""
+    st.markdown(
+        f"""
+        <div class="trainer-hero">
+          {photo_html}
+          <div class="trainer-copy">
+            <span class="eyebrow">Where finance meets technology</span>
+            <h2>A Chartered Accountant who codes.</h2>
+            <p class="trainer-role">Senior Auditor — IT & Audit Analytics · Trainer · AI builder</p>
+            <p>Pradeep qualified as a Chartered Accountant with ICAI in 2011 and has more than 18 years of experience spanning finance, internal audit, IT audit, risk advisory, data analytics and emerging technology.</p>
+            <p>His teaching style combines business context with hands-on construction. Learners do not only follow Power BI clicks: they learn how to define data grain, build dependable models, write measures, investigate exceptions and communicate decisions.</p>
+            <div class="trainer-links"><a href="https://www.linkedin.com/in/pradeep-gujaran-botguy/" target="_blank">LinkedIn profile ↗</a><a href="https://github.com/capgujaran" target="_blank">GitHub portfolio ↗</a></div>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div class="trainer-stat-grid">
+          <div class="trainer-stat"><strong>18+</strong><span>Years across audit, finance and technology</span></div>
+          <div class="trainer-stat"><strong>30+</strong><span>Analytics, AI and automation tools designed</span></div>
+          <div class="trainer-stat"><strong>2011</strong><span>Qualified Chartered Accountant with ICAI</span></div>
+          <div class="trainer-stat"><strong>Power BI</strong><span>Certified trainer for finance and audit teams</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.subheader("Selected awards and recognition")
+    st.caption("Recognitions across audit innovation, AI, analytics and professional leadership.")
+    awards = [
+        ("2026", "UAE IAA — LPIA Award, IT Category", "Recognition with the Khalifa University audit team for the Intelligent Audit Assistant."),
+        ("2025", "OpenAI × Khalifa University Code-Athon", "Recognised as a top performer in the ChatGPT Edu Code-Athon."),
+        ("2024", "DDS × CODE Summit — 2nd Place", "Second among 103 participants for CertifyMe AI, built end-to-end in 72 hours."),
+        ("2023", "BNI Continental — Award of Excellence", "Recognised as New Member Rockstar for outstanding contribution and referrals."),
+        ("2021", "Innovation Award — Barakat Group", "Recognised for RPA and analytics-led audit automation."),
+        ("2020", "Pat on the Back — Barakat Group", "Awarded for exceptional contribution to internal audit and process improvement."),
+    ]
+    award_html = "".join(
+        f'<div class="award-card"><span class="award-year">{year}</span><b>{title}</b><p>{description}</p></div>'
+        for year, title, description in awards
+    )
+    st.markdown(f'<div class="award-grid">{award_html}</div>', unsafe_allow_html=True)
+
+    experience_col, training_col = st.columns([1.08, 0.92], gap="large")
+    with experience_col:
+        st.subheader("Experience at a glance")
+        st.markdown(
+            """
+            <div class="experience-line">
+              <div class="experience-item"><span>2024 — Present</span><b>Senior Auditor — IT & Audit Analytics</b><p>Khalifa University, Office of Internal Audit. Builds AI-enabled audit workflows, analytics and Power BI solutions.</p></div>
+              <div class="experience-item"><span>2022 — 2024</span><b>Risk advisory, analytics and automation leadership</b><p>Associate Partner with RHMC Management Consultants and Smart InfoPark Technologies, followed by independent consulting engagements.</p></div>
+              <div class="experience-item"><span>2016 — 2022</span><b>Internal audit and finance automation</b><p>Leadership roles with Al Ghurair and Barakat Group, including 30+ RPA solutions and advanced Power BI analytics.</p></div>
+              <div class="experience-item"><span>2011 — 2016</span><b>Audit management across major industries</b><p>Internal audit roles with The Leela Hotels, Godrej & Boyce and Altisource.</p></div>
+              <div class="experience-item"><span>2006 — 2011</span><b>Articleship and audit consulting</b><p>SNB Associates, covering statutory, tax, internal, interim and management audits.</p></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with training_col:
+        st.subheader("Training experience")
+        st.markdown(
+            """
+            <div class="experience-line">
+              <div class="experience-item"><span>Power BI</span><b>Financial analysis and audit analytics</b><p>Hands-on workshops for professional bodies, enterprise finance teams and internal audit functions.</p></div>
+              <div class="experience-item"><span>Enterprise enablement</span><b>From source files to decision-ready reports</b><p>Power BI delivery for Al Futtaim Internal Audit and other cross-functional business teams.</p></div>
+              <div class="experience-item"><span>Automation</span><b>RPA, Python and Power Automate</b><p>Practical programmes linking repetitive finance processes to scalable automation.</p></div>
+              <div class="experience-item"><span>Applied AI</span><b>AI for finance and audit professionals</b><p>Sessions on LLM workflows, analytics acceleration, governance and responsible adoption.</p></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.subheader("Expertise brought into this course")
+    expertise = [
+        ("Audit & analytics", "Internal audit, IT audit, continuous controls monitoring, risk management and audit automation."),
+        ("Power BI", "Power Query, dimensional modelling, DAX, report design, deployment and governance."),
+        ("Data & AI", "Python, SQL, applied machine learning, LLM APIs, document processing and analytics tools."),
+        ("Automation", "UiPath, Power Automate and workflow design across finance, sales, procurement and reporting."),
+        ("Business storytelling", "Turning reconciled measures and exceptions into clear management decisions."),
+        ("Leadership", "Project delivery, public speaking, professional training and technology adoption."),
+    ]
+    expertise_html = "".join(f'<div class="expertise-card"><b>{title}</b><p>{body}</p></div>' for title, body in expertise)
+    st.markdown(f'<div class="expertise-grid">{expertise_html}</div>', unsafe_allow_html=True)
+    st.info("This profile is drawn from CA Pradeep Gujaran’s professional portfolio and adapted specifically for this Power BI learning programme.")
 
 
 def resources() -> None:
@@ -704,6 +1040,7 @@ page = sidebar()
     "Three-day plan": three_day_plan,
     "Interactive lab": interactive_lab,
     "Assessment": assessment,
+    "About the Trainer": trainer_profile,
     "Resources": resources,
     "Certificate": certificate,
 }[page]()
