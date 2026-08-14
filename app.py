@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from datetime import date
 from html import escape
+from io import BytesIO
 from pathlib import Path
 import base64
 import math
 import random
+from zipfile import ZIP_DEFLATED, ZipFile
 
 import pandas as pd
 import streamlit as st
@@ -137,6 +139,22 @@ def inject_styles() -> None:
         .legend-dot { display:inline-block; width:.75rem; height:.75rem; border-radius:3px; margin-right:.3rem; vertical-align:-.05rem; }
         .merge-callout { background:radial-gradient(circle at 88% 20%,rgba(72,150,139,.28),transparent 35%),linear-gradient(135deg,#102933,var(--ink)); color:white; padding:1.25rem 1.4rem; border-radius:9px; margin:.8rem 0 1.2rem; }
         .merge-callout b { color:#e1b978; }
+        .append-flow { background:white; border:1px solid var(--line); border-radius:9px; padding:1.15rem; margin:.8rem 0 1.2rem; }
+        .append-sources { display:grid; grid-template-columns:repeat(3,1fr); gap:.7rem; }
+        .append-source { position:relative; min-height:92px; background:#f7f9f7; border:1px solid var(--line); border-top:5px solid var(--source-color,#177c72); border-radius:7px; padding:.8rem .9rem; }
+        .append-source b,.append-target b { display:block; color:var(--ink); margin-bottom:.25rem; }
+        .append-source span,.append-target span { color:var(--muted); font-size:.75rem; line-height:1.35; }
+        .append-source.inactive { opacity:.32; border-top-color:#aab3b1; }
+        .append-down { text-align:center; color:var(--ink); font-weight:800; padding:.65rem 0 .5rem; }
+        .append-down .arrow { display:block; color:var(--gold); font-size:1.75rem; line-height:1; }
+        .append-target { max-width:620px; margin:auto; background:#eef6f4; border:2px solid #7fb4aa; border-radius:8px; padding:.9rem 1rem; text-align:center; }
+        .schema-map { display:grid; grid-template-columns:1fr auto 1fr; gap:.75rem; align-items:center; margin:.6rem 0 1rem; }
+        .schema-box { background:white; border:1px solid var(--line); border-radius:7px; padding:.8rem .9rem; min-height:92px; }
+        .schema-box b { display:block; color:var(--ink); margin-bottom:.3rem; }
+        .schema-box span { display:inline-block; background:#eef3f1; color:#49615d; padding:.18rem .32rem; margin:.12rem; border-radius:3px; font-size:.68rem; }
+        .schema-box span.mismatch { background:#fff0e8; color:#9a4e32; }
+        .schema-arrow { text-align:center; color:var(--teal); font-size:1.55rem; font-weight:800; }
+        .append-warning { background:#fff7e7; border-left:4px solid var(--gold); color:#6d5632; padding:.8rem .9rem; margin:.65rem 0; border-radius:0 6px 6px 0; }
         .retained-chart { display:flex; flex-direction:column; gap:1rem; background:white; border:1px solid var(--line); border-radius:8px; padding:1.15rem; min-height:250px; justify-content:center; }
         .retained-row__label { display:flex; justify-content:space-between; gap:1rem; color:#53656b; font-size:.74rem; font-weight:700; margin-bottom:.4rem; }
         .retained-row__label b { color:var(--ink); font-family:'Libre Baskerville'; font-size:.9rem; }
@@ -212,7 +230,7 @@ def inject_styles() -> None:
         div[data-testid="stDataFrame"] { border:1px solid var(--line); border-radius:7px; overflow:hidden; }
         div[data-baseweb="select"] > div, .stTextInput input, .stNumberInput input { border-radius:6px; }
         div[data-testid="stAlert"] { border-radius:7px; }
-        @media(max-width:900px){.hero,.assessment-hero,.trainer-hero{grid-template-columns:1fr}.hero,.assessment-hero{padding:2.6rem}.journey-wheel{display:none}.metric-row,.trainer-stat-grid{grid-template-columns:repeat(2,1fr)}.merge-flow{grid-template-columns:1fr}.merge-arrows{transform:rotate(90deg);padding:.25rem}.expertise-grid{grid-template-columns:1fr}.award-grid{grid-template-columns:1fr}.trainer-photo,.trainer-photo img{min-height:0;max-height:520px}}
+        @media(max-width:900px){.hero,.assessment-hero,.trainer-hero{grid-template-columns:1fr}.hero,.assessment-hero{padding:2.6rem}.journey-wheel{display:none}.metric-row,.trainer-stat-grid{grid-template-columns:repeat(2,1fr)}.merge-flow,.schema-map{grid-template-columns:1fr}.merge-arrows,.schema-arrow{transform:rotate(90deg);padding:.25rem}.append-sources{grid-template-columns:1fr}.expertise-grid{grid-template-columns:1fr}.award-grid{grid-template-columns:1fr}.trainer-photo,.trainer-photo img{min-height:0;max-height:520px}}
         @media(max-width:560px){.metric-row,.trainer-stat-grid,.day-result-grid{grid-template-columns:1fr}.block-container{padding:4.5rem 1rem 3rem}.hero,.assessment-hero,.trainer-copy{padding:2rem 1.35rem}.page-intro{display:block}.page-intro h1{font-size:2rem}.result-panel{grid-template-columns:1fr;text-align:center}.result-ring{margin:auto}.award-card{padding-left:1rem;padding-top:3.6rem}.award-year{top:1rem}}
         @media print {[data-testid="stSidebar"],header,[data-testid="stToolbar"],.page-intro,.metric-row,.small-note,.credit,.stAlert{display:none!important}.block-container{max-width:none;padding:0}.certificate{box-shadow:none;min-height:92vh;display:flex;flex-direction:column;justify-content:center}}
         </style>
@@ -398,6 +416,207 @@ def show_course_image(path: Path, caption: str) -> None:
     st.image(str(path), caption=caption, width=min(source_width, 1000))
     if source_width < 720:
         st.caption("Shown at its original width to preserve clarity. Use fullscreen to inspect the source capture.")
+
+
+def append_sample_tables(scenario: str, normalize_headers: bool, inject_duplicate: bool) -> list[tuple[str, str, pd.DataFrame]]:
+    january = pd.DataFrame(
+        {
+            "InvoiceID": ["INV-1001", "INV-1002", "INV-1003", "INV-1004"],
+            "InvoiceDate": ["2026-01-05", "2026-01-12", "2026-01-19", "2026-01-27"],
+            "Region": ["Dubai", "Sharjah", "Dubai", "Ajman"],
+            "NetAmount": [4200, 6400, 3150, 5800],
+        }
+    )
+    february = pd.DataFrame(
+        {
+            "InvoiceID": ["INV-2001", "INV-2002", "INV-2003"],
+            "InvoiceDate": ["2026-02-04", "2026-02-14", "2026-02-25"],
+            "Region": ["Dubai", "Ajman", "Sharjah"],
+            "NetAmount": [7100, 2950, 8300],
+        }
+    )
+    march = pd.DataFrame(
+        {
+            "InvoiceID": ["INV-3001", "INV-3002", "INV-3003"],
+            "InvoiceDate": ["2026-03-03", "2026-03-16", "2026-03-28"],
+            "Region": ["Sharjah", "Dubai", "Ajman"],
+            "NetAmount": [5100, 9250, 3600],
+        }
+    )
+    if scenario == "Schema mismatch · revised February file":
+        february = february.rename(columns={"NetAmount": "SalesAmount"})
+        february["Channel"] = ["Retail", "Online", "Retail"]
+        if normalize_headers:
+            february = february.rename(columns={"SalesAmount": "NetAmount"})
+        tables = [
+            ("January Sales", "January_Sales.csv", january),
+            ("February Revised", "February_Revised.csv", february),
+        ]
+    elif scenario == "Three tables · January + February + March":
+        tables = [
+            ("January Sales", "January_Sales.csv", january),
+            ("February Sales", "February_Sales.csv", february),
+            ("March Sales", "March_Sales.csv", march),
+        ]
+    else:
+        tables = [
+            ("January Sales", "January_Sales.csv", january),
+            ("February Sales", "February_Sales.csv", february),
+        ]
+
+    if inject_duplicate:
+        label, filename, last_table = tables[-1]
+        repeated = {
+            "InvoiceID": "INV-1002",
+            "InvoiceDate": "2026-01-12",
+            "Region": "Sharjah",
+            "NetAmount": 6400,
+            "SalesAmount": 6400,
+            "Channel": "Retail",
+        }
+        duplicate_row = pd.DataFrame([{column: repeated[column] for column in last_table.columns}])
+        tables[-1] = (label, filename, pd.concat([last_table, duplicate_row], ignore_index=True))
+    return tables
+
+
+def append_result(tables: list[tuple[str, str, pd.DataFrame]]) -> pd.DataFrame:
+    prepared = []
+    for label, _, table in tables:
+        part = table.copy()
+        part.insert(0, "Source Table", label)
+        prepared.append(part)
+    return pd.concat(prepared, ignore_index=True, sort=False)
+
+
+def append_row_style(row: pd.Series) -> list[str]:
+    colors = {
+        "January Sales": "background-color:#fff3b0;color:#0b1739",
+        "February Sales": "background-color:#dff5ec;color:#0b1739",
+        "February Revised": "background-color:#dff5ec;color:#0b1739",
+        "March Sales": "background-color:#e6f0ff;color:#0b1739",
+    }
+    return [colors.get(row.get("Source Table"), "") for _ in row]
+
+
+def append_practice_zip(tables: list[tuple[str, str, pd.DataFrame]]) -> bytes:
+    buffer = BytesIO()
+    with ZipFile(buffer, "w", ZIP_DEFLATED) as archive:
+        for _, filename, table in tables:
+            archive.writestr(filename, table.to_csv(index=False))
+    return buffer.getvalue()
+
+
+def detailed_append_lab() -> None:
+    st.markdown(
+        '<div class="merge-callout"><b>Interactive Append Queries laboratory</b><br>Change the append scenario below. The source tables, schema comparison, row-flow diagram, combined output, reconciliation metrics and Power Query formula update together.</div>',
+        unsafe_allow_html=True,
+    )
+    scenarios = [
+        "Two tables · January + February",
+        "Three tables · January + February + March",
+        "Schema mismatch · revised February file",
+    ]
+    scenario = st.selectbox("Append scenario", scenarios, key="append_scenario")
+    normalize_headers = False
+    if scenario == "Schema mismatch · revised February file":
+        normalize_headers = st.toggle("Rename SalesAmount to NetAmount before appending", key="append_normalize_headers")
+    inject_duplicate = st.toggle("Inject a repeated invoice to test duplicate controls", key="append_inject_duplicate")
+    tables = append_sample_tables(scenario, normalize_headers, inject_duplicate)
+    result = append_result(tables)
+
+    source_colors = ["#f2c811", "#177c72", "#4d8fe8"]
+    source_cards = []
+    for index in range(3):
+        if index < len(tables):
+            label, _, table = tables[index]
+            source_cards.append(
+                f'<div class="append-source" style="--source-color:{source_colors[index]}"><b>{index + 1}. {label}</b><span>{len(table)} rows · {len(table.columns)} columns<br>{" · ".join(table.columns)}</span></div>'
+            )
+        else:
+            source_cards.append('<div class="append-source inactive"><b>3. Optional additional table</b><span>Select the three-table scenario to include March.</span></div>')
+    st.markdown(
+        f'''<div class="append-flow"><div class="append-sources">{"".join(source_cards)}</div><div class="append-down"><span class="arrow">↓</span>match columns by name, then stack every row</div><div class="append-target"><b>Combined Sales</b><span>{len(result)} output rows · {len(result.columns) - 1} business columns · same transaction grain</span></div></div>''',
+        unsafe_allow_html=True,
+    )
+
+    first_columns = list(tables[0][2].columns)
+    comparison_columns = sorted(set().union(*(set(table.columns) for _, _, table in tables[1:])))
+    common_columns = set(first_columns).intersection(comparison_columns)
+    first_tags = "".join(
+        f'<span class="{"" if column in common_columns else "mismatch"}">{column}</span>' for column in first_columns
+    )
+    comparison_tags = "".join(
+        f'<span class="{"" if column in common_columns else "mismatch"}">{column}</span>' for column in comparison_columns
+    )
+    schema_heading = "Other table schema" if len(tables) == 2 else "February and March schema"
+    st.markdown(
+        f'''<div class="schema-map"><div class="schema-box"><b>January schema</b>{first_tags}</div><div class="schema-arrow">→<br><span style="font-size:.65rem">column-name alignment</span></div><div class="schema-box"><b>{schema_heading}</b>{comparison_tags}</div></div>''',
+        unsafe_allow_html=True,
+    )
+    if scenario == "Schema mismatch · revised February file" and not normalize_headers:
+        st.markdown('<div class="append-warning"><b>Watch the mismatch:</b> NetAmount and SalesAmount are treated as different columns. January rows receive blanks under SalesAmount; February rows receive blanks under NetAmount.</div>', unsafe_allow_html=True)
+    elif scenario == "Schema mismatch · revised February file":
+        st.success("SalesAmount now aligns with NetAmount. Channel remains an additional column, so January rows correctly receive blank Channel values.")
+    else:
+        st.info("Every source uses the same column names and transaction grain, so the output row count should equal the sum of the inputs.")
+
+    source_tabs = st.tabs([label for label, _, _ in tables])
+    for tab, (label, _, table) in zip(source_tabs, tables):
+        with tab:
+            st.dataframe(table, hide_index=True, use_container_width=True)
+            st.caption(f"{label}: one row represents one invoice. Append keeps these rows and places them below the earlier source rows.")
+
+    input_rows = sum(len(table) for _, _, table in tables)
+    duplicate_ids = int(result["InvoiceID"].duplicated(keep=False).groupby(result["InvoiceID"]).any().sum()) if result["InvoiceID"].duplicated(keep=False).any() else 0
+    metrics = st.columns(4)
+    metrics[0].metric("Source tables", len(tables))
+    metrics[1].metric("Input rows", input_rows)
+    metrics[2].metric("Output rows", len(result), "Reconciled" if len(result) == input_rows else "Investigate")
+    metrics[3].metric("Duplicate invoice IDs", duplicate_ids, "Review" if duplicate_ids else "Clear")
+
+    chart_col, output_col = st.columns([.78, 1.62])
+    with chart_col:
+        st.markdown("#### Rows contributed by source")
+        max_rows = max(len(table) for _, _, table in tables)
+        bars = "".join(
+            f'<div class="retained-row"><div class="retained-row__label"><span>{label}</span><b>{len(table)}</b></div><div class="retained-track"><span style="width:{len(table) / max_rows * 100:.0f}%;background:{source_colors[index]}"></span></div></div>'
+            for index, (label, _, table) in enumerate(tables)
+        )
+        st.markdown(f'<div class="retained-chart">{bars}</div>', unsafe_allow_html=True)
+    with output_col:
+        st.markdown("#### Live appended output")
+        display_result = result.copy()
+        for amount_column in [column for column in ["NetAmount", "SalesAmount"] if column in display_result.columns]:
+            display_result[amount_column] = display_result[amount_column].map(lambda value: "—" if pd.isna(value) else f"AED {value:,.0f}")
+        display_result = display_result.fillna("—")
+        st.dataframe(display_result.style.apply(append_row_style, axis=1), hide_index=True, use_container_width=True)
+
+    st.markdown(
+        '<div class="merge-legend"><span><i class="legend-dot" style="background:#fff3b0"></i>January rows</span><span><i class="legend-dot" style="background:#dff5ec"></i>February rows</span><span><i class="legend-dot" style="background:#e6f0ff"></i>March rows</span></div>',
+        unsafe_allow_html=True,
+    )
+    if duplicate_ids:
+        duplicated = ", ".join(sorted(result.loc[result["InvoiceID"].duplicated(keep=False), "InvoiceID"].unique()))
+        st.error(f"Duplicate control triggered: {duplicated} appears in more than one source. Append does not remove duplicates automatically.")
+
+    st.markdown("#### Power Query translation")
+    query_names = [filename.removesuffix(".csv") for _, filename, _ in tables]
+    if scenario == "Schema mismatch · revised February file" and normalize_headers:
+        st.code(
+            'February_Normalized = Table.RenameColumns(February_Revised, {{"SalesAmount", "NetAmount"}}),\nCombinedSales = Table.Combine({January_Sales, February_Normalized})',
+            language="powerquery",
+        )
+    else:
+        st.code(f'CombinedSales = Table.Combine({{{", ".join(query_names)}}})', language="powerquery")
+    st.caption("Table.Combine uses column names, not column position. It preserves every input row and creates nulls where a source does not contain an output column.")
+    st.download_button(
+        "Download the current append practice files (.zip)",
+        data=append_practice_zip(tables),
+        file_name="append-queries-practice-files.zip",
+        mime="application/zip",
+        key=f"append_download_{scenario}_{normalize_headers}_{inject_duplicate}",
+        use_container_width=True,
+    )
 
 
 def merge_venn(join_type: str) -> str:
@@ -606,10 +825,14 @@ def interactive_lab() -> None:
     lab_id = selected["id"]
     guide = TOOL_LABS[lab_id]
     if lab_id == 4:
-        detailed_merge_lab()
+        append_tab, merge_tab = st.tabs(["Append Queries · Stack rows", "Merge Queries · Match keys"])
+        with append_tab:
+            detailed_append_lab()
+        with merge_tab:
+            detailed_merge_lab()
         st.divider()
         st.subheader("Power BI screen reference")
-        st.caption("The live vector lab above carries the detailed explanation; these source captures show where the commands appear in Power Query.")
+        st.caption("The interactive labs above carry the detailed explanation; these source captures show where both commands appear in Power Query.")
     st.subheader(guide["screen_title"])
     screen_tabs = st.tabs([screen[0] for screen in guide["screens"]]) if len(guide["screens"]) > 1 else [st.container()]
     for tab, (label, filename, caption, notices) in zip(screen_tabs, guide["screens"]):
@@ -658,16 +881,31 @@ def interactive_lab() -> None:
         st.write("Result")
         st.dataframe(cleaned, hide_index=True, use_container_width=True)
     elif lab_id == 4:
-        control_answer = st.radio(
-            "Which join should an accountant use to list Sales Orders that have no Customer Master match?",
-            ["Inner", "Left Outer", "Left Anti", "Right Anti"],
-            index=None,
-            horizontal=True,
-        )
-        if control_answer == "Left Anti":
-            st.success("Correct. Left Anti keeps only non-matching rows from the primary table.")
-        elif control_answer:
-            st.warning("Review the highlighted regions above: the exception population is the primary-only region.")
+        append_check, merge_check = st.tabs(["Append check", "Merge check"])
+        with append_check:
+            append_answer = st.radio(
+                "January and February invoice files have the same grain and columns. Which operation creates one consolidated sales table?",
+                ["Append Queries", "Merge Queries", "Create relationship", "Group By"],
+                index=None,
+                horizontal=True,
+                key="append_control_answer",
+            )
+            if append_answer == "Append Queries":
+                st.success("Correct. Append stacks the February rows below the January rows.")
+            elif append_answer:
+                st.warning("Review the row-flow diagram: the files describe the same kind of transaction, so they should be stacked vertically.")
+        with merge_check:
+            control_answer = st.radio(
+                "Which join should an accountant use to list Sales Orders that have no Customer Master match?",
+                ["Inner", "Left Outer", "Left Anti", "Right Anti"],
+                index=None,
+                horizontal=True,
+                key="merge_control_answer",
+            )
+            if control_answer == "Left Anti":
+                st.success("Correct. Left Anti keeps only non-matching rows from the primary table.")
+            elif control_answer:
+                st.warning("Review the highlighted regions above: the exception population is the primary-only region.")
     elif lab_id == 5:
         duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension")
         st.write("Relationship: **Product (one) → Sales (many)**" if not duplicate else "Relationship cannot remain one-to-many because the dimension key is no longer unique.")
