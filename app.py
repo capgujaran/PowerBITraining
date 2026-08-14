@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from html import escape
 from pathlib import Path
 import base64
 import math
@@ -107,8 +108,19 @@ def inject_styles() -> None:
         .day-card h3 { margin:.3rem 0; }
         .day-card p { color:var(--muted); min-height:72px; }
         .credit { text-align:center; color:#8e97aa; font-size:.82rem; padding-top:2rem; }
-        .certificate { background:#fffdf5; border:9px double var(--gold); padding:3rem; text-align:center; border-radius:4px; }
-        .certificate .name { font-family:'Libre Baskerville'; color:var(--ink); font-size:2rem; border-bottom:1px solid #d9d1ad; display:inline-block; padding:0 2rem .4rem; }
+        .certificate { position:relative; overflow:hidden; background:radial-gradient(circle at 50% 8%,rgba(201,150,82,.13),transparent 30%),#fffdf7; border:9px double var(--gold); padding:clamp(2rem,4vw,3.5rem); text-align:center; border-radius:4px; box-shadow:0 16px 38px rgba(35,42,46,.09); }
+        .certificate:before,.certificate:after { content:''; position:absolute; width:90px; height:90px; border:1px solid rgba(201,150,82,.28); transform:rotate(45deg); }
+        .certificate:before { left:-54px; top:-54px; }.certificate:after { right:-54px; bottom:-54px; }
+        .certificate .certificate-kicker { color:#9a6c30; font-size:.68rem; font-weight:800; letter-spacing:.22em; text-transform:uppercase; }
+        .certificate h1 { margin:.7rem 0 .45rem; font-size:clamp(2rem,3.4vw,3.25rem); }
+        .certificate .programme { color:#516269; font-family:'Libre Baskerville'; font-size:1.05rem; margin:0 auto 1.5rem; }
+        .certificate .presented-to { color:#7a8589; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; }
+        .certificate .name { font-family:'Libre Baskerville'; color:var(--ink); font-size:clamp(1.65rem,2.8vw,2.35rem); border-bottom:1px solid #d9d1ad; display:inline-block; min-width:min(520px,85%); padding:.35rem 2rem .45rem; }
+        .certificate .participation-copy { color:#46585f; line-height:1.65; max-width:760px; margin:1.25rem auto; }
+        .certificate .certificate-meta { display:flex; justify-content:center; flex-wrap:wrap; gap:.35rem 1.5rem; color:#53656b; font-size:.78rem; margin:1.15rem 0; }
+        .certificate .trainer-signoff { color:var(--ink); font-weight:700; margin:.8rem 0 0; }
+        .certificate .disclaimer { max-width:940px; margin:1.25rem auto 0; padding-top:.7rem; border-top:1px solid #e4dcc8; color:#808487; font-size:.5rem; line-height:1.35; letter-spacing:.005em; }
+        .certificate .sample-watermark { position:absolute; left:50%; top:48%; transform:translate(-50%,-50%) rotate(-20deg); color:rgba(139,104,59,.075); font-family:'Libre Baskerville'; font-size:clamp(4rem,11vw,9rem); font-weight:700; letter-spacing:.08em; pointer-events:none; white-space:nowrap; }
         .small-note { color:var(--muted); font-size:.85rem; }
         .screen-note { background:#edf7f1; border:1px solid #c9ded4; border-radius:7px; padding:.9rem 1rem; margin:.7rem 0 1rem; }
         .screen-note b { color:var(--ink); }
@@ -202,6 +214,7 @@ def inject_styles() -> None:
         div[data-testid="stAlert"] { border-radius:7px; }
         @media(max-width:900px){.hero,.assessment-hero,.trainer-hero{grid-template-columns:1fr}.hero,.assessment-hero{padding:2.6rem}.journey-wheel{display:none}.metric-row,.trainer-stat-grid{grid-template-columns:repeat(2,1fr)}.merge-flow{grid-template-columns:1fr}.merge-arrows{transform:rotate(90deg);padding:.25rem}.expertise-grid{grid-template-columns:1fr}.award-grid{grid-template-columns:1fr}.trainer-photo,.trainer-photo img{min-height:0;max-height:520px}}
         @media(max-width:560px){.metric-row,.trainer-stat-grid,.day-result-grid{grid-template-columns:1fr}.block-container{padding:4.5rem 1rem 3rem}.hero,.assessment-hero,.trainer-copy{padding:2rem 1.35rem}.page-intro{display:block}.page-intro h1{font-size:2rem}.result-panel{grid-template-columns:1fr;text-align:center}.result-ring{margin:auto}.award-card{padding-left:1rem;padding-top:3.6rem}.award-year{top:1rem}}
+        @media print {[data-testid="stSidebar"],header,[data-testid="stToolbar"],.page-intro,.metric-row,.small-note,.credit,.stAlert{display:none!important}.block-container{max-width:none;padding:0}.certificate{box-shadow:none;min-height:92vh;display:flex;flex-direction:column;justify-content:center}}
         </style>
         """,
         unsafe_allow_html=True,
@@ -1011,8 +1024,28 @@ def resources() -> None:
     st.caption("Completed PBIX files are reference solutions. Rebuild the exercise independently before comparing your approach.")
 
 
+def certificate_document(learner_name: str, sample: bool = False) -> None:
+    safe_name = escape(learner_name)
+    watermark = '<div class="sample-watermark">SAMPLE</div>' if sample else ""
+    st.markdown(
+        f'''<div class="certificate">
+        {watermark}
+        <div class="certificate-kicker">Independent learning workshop</div>
+        <h1>Certificate of Participation</h1>
+        <div class="programme">Power BI for Finance, Reporting and Audit Analytics</div>
+        <div class="presented-to">Presented to</div>
+        <div class="name">{safe_name}</div>
+        <p class="participation-copy">This acknowledges participation in the independent three-day workshop and completion of its guided learning activities covering data preparation, modelling, DAX, visual analysis and reporting.</p>
+        <div class="certificate-meta"><span><b>{date.today().strftime("%d %B %Y")}</b></span><span>Dubai, United Arab Emirates</span><span>Three-day workshop</span></div>
+        <p class="trainer-signoff">Developed and delivered by CA Pradeep Gujaran</p>
+        <div class="disclaimer"><b>Disclaimer:</b> This document is issued solely as a record of participation in an independently delivered educational workshop. It is not an accredited academic or professional qualification, licence, certification or evidence of professional competency, and it carries no CPE or CPD credit unless separately approved in writing by the relevant professional body. Unless expressly confirmed through separate written authorization, it is not accredited, attested, sponsored or endorsed by any government authority, educational regulator, professional body, awarding organisation or software vendor. Power BI is a Microsoft product. This workshop is independently delivered and is neither affiliated with, nor authorized, sponsored or approved by Microsoft Corporation.</div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+
+
 def certificate() -> None:
-    page_header("Completion", "Course certificate", "Complete all 12 modules and pass the assessment to unlock your personalized certificate.")
+    page_header("Participation record", "Certificate of participation", "This document records participation in the independent workshop. It is not an accredited qualification or professional certification.")
     name = st.session_state.learner_name
     modules_done = len(st.session_state.completed)
     score = st.session_state.quiz_result or 0
@@ -1022,13 +1055,13 @@ def certificate() -> None:
     c2.metric("Modules", f"{modules_done}/{len(MODULES)}")
     c3.metric("Assessment", f"{score}/20")
     if eligible:
-        st.markdown(
-            f'''<div class="certificate"><div class="eyebrow">Certificate of completion</div><h1>Power BI for Finance, Reporting and Audit Analytics</h1><p>This certifies that</p><div class="name">{name}</div><p>successfully completed the three-day learning programme<br>and demonstrated applied understanding of the full Power BI workflow.</p><p><b>{date.today().strftime("%d %B %Y")}</b> · Dubai</p><p>Developed by CA Pradeep Gujaran</p></div>''',
-            unsafe_allow_html=True,
-        )
-        st.info("Use your browser's Print command and choose **Save as PDF** to retain a copy.")
+        certificate_document(name)
+        st.info("Use your browser's Print command and choose **Save as PDF** to retain this participation record.")
     else:
-        st.warning("Add your learner name in the sidebar, complete all modules and score at least 14/20 to unlock the certificate.")
+        st.warning("The personalized participation record becomes available after adding your name, completing all modules and finishing the assessment. The preview below is watermarked as a sample.")
+        st.subheader("Sample certificate")
+        certificate_document(name or "Sample Learner", sample=True)
+    st.caption("The assessment supports learning and feedback; its score is intentionally not printed on the participation document.")
 
 
 inject_styles()
