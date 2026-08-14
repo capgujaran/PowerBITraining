@@ -7,6 +7,8 @@ import random
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
+from PIL import Image
 
 from course_data import ASSESSMENT, MODULES, RESOURCES, SCHEDULE, TOOL_LABS
 
@@ -67,10 +69,22 @@ def inject_styles() -> None:
         .screen-note { background:#eef5ff; border:1px solid #cbdcf5; border-radius:14px; padding:.85rem 1rem; margin:.7rem 0 1rem; }
         .screen-note b { color:#0b1739; }
         .tool-path { background:white; border:1px solid var(--line); border-radius:18px; padding:1rem 1.15rem; box-shadow:0 5px 20px rgba(11,23,57,.05); }
+        .merge-flow { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:1rem; margin:.7rem 0 1.2rem; }
+        .merge-source { background:white; border:2px solid #dfe4ef; border-radius:16px; padding:.9rem 1rem; box-shadow:0 6px 20px rgba(11,23,57,.06); }
+        .merge-source.primary { border-left:7px solid #f2c811; }
+        .merge-source.secondary { border-right:7px solid #4d8fe8; }
+        .merge-source b { display:block; color:#0b1739; font-size:1.02rem; }
+        .merge-source span { color:#64708b; font-size:.84rem; }
+        .merge-arrows { text-align:center; color:#0b1739; font-weight:800; line-height:1.35; }
+        .merge-arrows .arrow { color:#d3a800; font-size:1.6rem; letter-spacing:.08rem; }
+        .merge-legend { display:flex; flex-wrap:wrap; gap:.55rem 1rem; margin:.4rem 0 1rem; color:#47536e; font-size:.86rem; }
+        .legend-dot { display:inline-block; width:.75rem; height:.75rem; border-radius:3px; margin-right:.3rem; vertical-align:-.05rem; }
+        .merge-callout { background:linear-gradient(135deg,#0b1739,#172a5e); color:white; padding:1rem 1.15rem; border-radius:16px; margin:.8rem 0 1rem; }
+        .merge-callout b { color:#f2c811; }
         div[data-testid="stProgress"] > div > div > div { background-color:var(--yellow); }
         .stButton > button, .stDownloadButton > button { border-radius:10px; border:1px solid #d7b313; font-weight:700; }
         .stButton > button[kind="primary"] { background:var(--yellow); color:var(--ink); border-color:var(--yellow); }
-        @media(max-width:800px){.metric-row{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:2.2rem}}
+        @media(max-width:800px){.metric-row{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:2.2rem}.merge-flow{grid-template-columns:1fr}.merge-arrows{transform:rotate(90deg);padding:.25rem}}
         </style>
         """,
         unsafe_allow_html=True,
@@ -225,6 +239,210 @@ def three_day_plan() -> None:
         st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
 
 
+def show_course_image(path: Path, caption: str) -> None:
+    """Show screenshots without enlarging small source images into a blur."""
+    with Image.open(path) as source:
+        source_width = source.width
+    st.image(str(path), caption=caption, width=min(source_width, 1000))
+    if source_width < 720:
+        st.caption("Shown at its original width to preserve clarity. Use fullscreen to inspect the source capture.")
+
+
+def merge_venn(join_type: str) -> str:
+    highlights = {
+        "Left Outer": '<circle cx="275" cy="150" r="120" fill="#f2c811" fill-opacity=".88"/>',
+        "Right Outer": '<circle cx="445" cy="150" r="120" fill="#4d8fe8" fill-opacity=".82"/>',
+        "Full Outer": '<circle cx="275" cy="150" r="120" fill="#f2c811" fill-opacity=".78"/><circle cx="445" cy="150" r="120" fill="#4d8fe8" fill-opacity=".68"/>',
+        "Inner": '<circle cx="275" cy="150" r="120" fill="#19a39b" clip-path="url(#right-circle)"/>',
+        "Left Anti": '<circle cx="275" cy="150" r="120" fill="#f2c811" mask="url(#left-only)"/>',
+        "Right Anti": '<circle cx="445" cy="150" r="120" fill="#4d8fe8" mask="url(#right-only)"/>',
+    }
+    descriptions = {
+        "Left Outer": "Primary only + matched rows",
+        "Right Outer": "Matched rows + secondary only",
+        "Full Outer": "Every key from both tables",
+        "Inner": "Matched rows only",
+        "Left Anti": "Primary rows with no match",
+        "Right Anti": "Secondary rows with no match",
+    }
+    included = {
+        "Left Outer": {"left", "match"},
+        "Right Outer": {"match", "right"},
+        "Full Outer": {"left", "match", "right"},
+        "Inner": {"match"},
+        "Left Anti": {"left"},
+        "Right Anti": {"right"},
+    }[join_type]
+    segment_style = lambda name: "font-weight:800;fill:#0b1739" if name in included else "fill:#9aa3b6"
+    return f"""
+    <div style="font-family:DM Sans,Arial,sans-serif;background:#fff;border:1px solid #e5e8ef;border-radius:18px;padding:8px 12px;box-shadow:0 8px 24px rgba(11,23,57,.05)">
+      <svg viewBox="0 0 720 330" width="100%" role="img" aria-label="{join_type} join diagram">
+        <defs>
+          <clipPath id="right-circle"><circle cx="445" cy="150" r="120"/></clipPath>
+          <mask id="left-only"><rect width="720" height="330" fill="white"/><circle cx="445" cy="150" r="120" fill="black"/></mask>
+          <mask id="right-only"><rect width="720" height="330" fill="white"/><circle cx="275" cy="150" r="120" fill="black"/></mask>
+          <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#0b1739"/></marker>
+        </defs>
+        <text x="360" y="25" text-anchor="middle" style="font-size:19px;font-weight:800;fill:#0b1739">{join_type}: {descriptions[join_type]}</text>
+        <circle cx="275" cy="150" r="120" fill="#f2f4f8" stroke="#0b1739" stroke-width="3"/>
+        <circle cx="445" cy="150" r="120" fill="#f2f4f8" stroke="#0b1739" stroke-width="3"/>
+        {highlights[join_type]}
+        <circle cx="275" cy="150" r="120" fill="none" stroke="#0b1739" stroke-width="3"/>
+        <circle cx="445" cy="150" r="120" fill="none" stroke="#0b1739" stroke-width="3"/>
+        <text x="215" y="132" text-anchor="middle" style="font-size:16px;{segment_style('left')}"><tspan x="215">Primary</tspan><tspan x="215" dy="19">only</tspan><tspan x="215" dy="21" style="font-size:13px">C01, C05</tspan></text>
+        <text x="360" y="143" text-anchor="middle" style="font-size:14px;{segment_style('match')}"><tspan x="360">Matched</tspan><tspan x="360" dy="21" style="font-size:12px">C02–C04</tspan></text>
+        <text x="505" y="132" text-anchor="middle" style="font-size:16px;{segment_style('right')}"><tspan x="505">Secondary</tspan><tspan x="505" dy="19">only</tspan><tspan x="505" dy="21" style="font-size:13px">C06, C07</tspan></text>
+        <path d="M185 280 C185 250,205 238,225 224" fill="none" stroke="#0b1739" stroke-width="2" marker-end="url(#arrowhead)"/>
+        <path d="M360 280 L360 226" fill="none" stroke="#0b1739" stroke-width="2" marker-end="url(#arrowhead)"/>
+        <path d="M535 280 C535 250,515 238,495 224" fill="none" stroke="#0b1739" stroke-width="2" marker-end="url(#arrowhead)"/>
+        <text x="185" y="305" text-anchor="middle" style="font-size:14px;{segment_style('left')}">{'KEPT' if 'left' in included else 'EXCLUDED'}</text>
+        <text x="360" y="305" text-anchor="middle" style="font-size:14px;{segment_style('match')}">{'KEPT' if 'match' in included else 'EXCLUDED'}</text>
+        <text x="535" y="305" text-anchor="middle" style="font-size:14px;{segment_style('right')}">{'KEPT' if 'right' in included else 'EXCLUDED'}</text>
+      </svg>
+    </div>
+    """
+
+
+def merge_result(join_type: str, primary: pd.DataFrame, secondary: pd.DataFrame) -> pd.DataFrame:
+    how = {
+        "Left Outer": "left",
+        "Right Outer": "right",
+        "Full Outer": "outer",
+        "Inner": "inner",
+        "Left Anti": "outer",
+        "Right Anti": "outer",
+    }[join_type]
+    result = primary.merge(secondary, on="CustomerKey", how=how, indicator=True)
+    if join_type == "Left Anti":
+        result = result[result["_merge"] == "left_only"]
+    elif join_type == "Right Anti":
+        result = result[result["_merge"] == "right_only"]
+    result["Match Status"] = result["_merge"].astype(str).map(
+        {"left_only": "Primary only", "both": "Matched", "right_only": "Secondary only"}
+    )
+    result = result.sort_values("CustomerKey").drop(columns="_merge").reset_index(drop=True)
+    return result
+
+
+def merge_row_style(row: pd.Series) -> list[str]:
+    colors = {
+        "Primary only": "background-color:#fff3b0;color:#0b1739",
+        "Matched": "background-color:#dff5ec;color:#0b1739",
+        "Secondary only": "background-color:#e6f0ff;color:#0b1739",
+    }
+    return [colors.get(row.get("Match Status"), "") for _ in row]
+
+
+def detailed_merge_lab() -> None:
+    st.markdown(
+        '<div class="merge-callout"><b>Interactive Merge Queries laboratory</b><br>Change the join kind below. The highlighted Venn regions, retained row groups, output count, result preview and Power Query formula all update together.</div>',
+        unsafe_allow_html=True,
+    )
+    join_types = ["Left Outer", "Right Outer", "Full Outer", "Inner", "Left Anti", "Right Anti"]
+    join_type = st.selectbox("Merge type", join_types, key="merge_join_type")
+
+    st.markdown(
+        """
+        <div class="merge-flow">
+          <div class="merge-source primary"><b>① Primary table · Sales Orders</b><span>First table selected in Merge Queries · key: CustomerKey</span></div>
+          <div class="merge-arrows"><div class="arrow">→ ↔ ←</div>compare keys<br><span style="font-size:.72rem;color:#64708b">then retain rows</span></div>
+          <div class="merge-source secondary"><b>② Secondary table · Customer Master</b><span>Second table selected in Merge Queries · key: CustomerKey</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    primary = pd.DataFrame(
+        {
+            "OrderID": ["SO-1001", "SO-1002", "SO-1003", "SO-1004", "SO-1005"],
+            "CustomerKey": ["C01", "C02", "C03", "C04", "C05"],
+            "NetAmount": [4200, 7800, 3150, 9600, 2750],
+        }
+    )
+    secondary = pd.DataFrame(
+        {
+            "CustomerKey": ["C02", "C03", "C04", "C06", "C07"],
+            "CustomerName": ["Desert Retail", "Marina Foods", "Creek Trading", "Oasis Services", "Falcon Stores"],
+            "Segment": ["Retail", "Hospitality", "Wholesale", "Services", "Retail"],
+        }
+    )
+    primary_view = primary.copy()
+    primary_view["Match Status"] = primary_view["CustomerKey"].map(
+        lambda key: "Matched" if key in set(secondary["CustomerKey"]) else "Primary only"
+    )
+    secondary_view = secondary.copy()
+    secondary_view["Match Status"] = secondary_view["CustomerKey"].map(
+        lambda key: "Matched" if key in set(primary["CustomerKey"]) else "Secondary only"
+    )
+    left, right = st.columns(2)
+    with left:
+        st.markdown("#### Primary table · Sales Orders")
+        st.dataframe(primary_view.style.apply(merge_row_style, axis=1), hide_index=True, use_container_width=True)
+    with right:
+        st.markdown("#### Secondary table · Customer Master")
+        st.dataframe(secondary_view.style.apply(merge_row_style, axis=1), hide_index=True, use_container_width=True)
+
+    st.markdown(
+        '<div class="merge-legend"><span><i class="legend-dot" style="background:#fff3b0"></i>Primary only</span><span><i class="legend-dot" style="background:#dff5ec"></i>Matched key in both tables</span><span><i class="legend-dot" style="background:#e6f0ff"></i>Secondary only</span></div>',
+        unsafe_allow_html=True,
+    )
+
+    result = merge_result(join_type, primary, secondary)
+    kept_groups = result["Match Status"].value_counts()
+    explanations = {
+        "Left Outer": "Keep every Sales Orders row. Bring Customer Master attributes where the key matches; C01 and C05 receive null customer attributes.",
+        "Right Outer": "Keep every Customer Master row. Bring Sales Orders fields where the key matches; C06 and C07 have no order fields.",
+        "Full Outer": "Keep every key from both tables. This is useful for reconciliation because both types of exception remain visible.",
+        "Inner": "Keep only keys found in both tables: C02, C03 and C04. Every unmatched row is removed.",
+        "Left Anti": "Return Sales Orders keys with no Customer Master match: C01 and C05. This is the standard exceptions query for unmapped transactions.",
+        "Right Anti": "Return Customer Master keys with no Sales Orders match: C06 and C07. This identifies unused master records in this sample.",
+    }
+    m_names = {
+        "Left Outer": "JoinKind.LeftOuter",
+        "Right Outer": "JoinKind.RightOuter",
+        "Full Outer": "JoinKind.FullOuter",
+        "Inner": "JoinKind.Inner",
+        "Left Anti": "JoinKind.LeftAnti",
+        "Right Anti": "JoinKind.RightAnti",
+    }
+
+    st.markdown(f"### ③ Live result · {join_type}")
+    components.html(merge_venn(join_type), height=385, scrolling=False)
+    st.info(explanations[join_type])
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Primary rows", len(primary))
+    metric_cols[1].metric("Secondary rows", len(secondary))
+    metric_cols[2].metric("Matched keys", 3)
+    metric_cols[3].metric("Output rows", len(result))
+
+    chart_data = pd.DataFrame(
+        {
+            "Row group": ["Primary only", "Matched", "Secondary only"],
+            "Rows kept": [int(kept_groups.get(group, 0)) for group in ["Primary only", "Matched", "Secondary only"]],
+        }
+    )
+    chart_col, output_col = st.columns([.8, 1.5])
+    with chart_col:
+        st.markdown("#### Rows retained by group")
+        st.bar_chart(chart_data, x="Row group", y="Rows kept", color="#f2c811", height=300)
+    with output_col:
+        st.markdown("#### Expanded output preview")
+        display_result = result.copy()
+        display_result["NetAmount"] = display_result["NetAmount"].map(lambda value: "—" if pd.isna(value) else f"AED {value:,.0f}")
+        display_result = display_result.fillna("—")
+        st.dataframe(display_result.style.apply(merge_row_style, axis=1), hide_index=True, use_container_width=True)
+
+    st.markdown("#### Power Query translation")
+    st.code(
+        f'Merged = Table.NestedJoin(SalesOrders, {{"CustomerKey"}}, CustomerMaster, {{"CustomerKey"}}, "Customer", {m_names[join_type]})',
+        language="powerquery",
+    )
+    if "Anti" in join_type:
+        st.caption("Anti joins are exception tests: they return non-matching rows from one side. There is normally nothing useful to expand from the other table.")
+    else:
+        st.caption("After the merge, select the expand icon on the new Customer column and keep only the attributes required for analysis.")
+
+
 def interactive_lab() -> None:
     page_header("See it, then build it", "Power BI guided lab", "Choose a topic to study the relevant Power BI screen, follow the exact click path and reproduce the technique in the supplied practice file.")
     labels = {f"{m['code']} · {m['title']}": m for m in MODULES}
@@ -232,13 +450,18 @@ def interactive_lab() -> None:
     st.markdown(f"### {selected['title']}")
     lab_id = selected["id"]
     guide = TOOL_LABS[lab_id]
+    if lab_id == 4:
+        detailed_merge_lab()
+        st.divider()
+        st.subheader("Power BI screen reference")
+        st.caption("The live vector lab above carries the detailed explanation; these source captures show where the commands appear in Power Query.")
     st.subheader(guide["screen_title"])
     screen_tabs = st.tabs([screen[0] for screen in guide["screens"]]) if len(guide["screens"]) > 1 else [st.container()]
     for tab, (label, filename, caption, notices) in zip(screen_tabs, guide["screens"]):
         with tab:
             path = SCREENSHOT_DIR / filename
             if path.exists():
-                st.image(str(path), caption=caption, width="stretch")
+                show_course_image(path, caption)
             else:
                 st.warning(f"Course screenshot unavailable: {label}")
             notice_html = "".join(f"<li>{item}</li>" for item in notices)
@@ -280,11 +503,16 @@ def interactive_lab() -> None:
         st.write("Result")
         st.dataframe(cleaned, hide_index=True, use_container_width=True)
     elif lab_id == 4:
-        join = st.selectbox("Join type", ["Left outer", "Inner", "Left anti", "Full outer"])
-        outcomes = {"Left outer": (5, "Keep all five transactions; unmatched product is null"), "Inner": (4, "Keep only the four matched transactions"), "Left anti": (1, "Return the one unmapped transaction for investigation"), "Full outer": (6, "Keep all transactions and all master records")}
-        count, copy = outcomes[join]
-        st.metric("Result rows", count)
-        st.info(copy)
+        control_answer = st.radio(
+            "Which join should an accountant use to list Sales Orders that have no Customer Master match?",
+            ["Inner", "Left Outer", "Left Anti", "Right Anti"],
+            index=None,
+            horizontal=True,
+        )
+        if control_answer == "Left Anti":
+            st.success("Correct. Left Anti keeps only non-matching rows from the primary table.")
+        elif control_answer:
+            st.warning("Review the highlighted regions above: the exception population is the primary-only region.")
     elif lab_id == 5:
         duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension")
         st.write("Relationship: **Product (one) → Sales (many)**" if not duplicate else "Relationship cannot remain one-to-many because the dimension key is no longer unique.")
