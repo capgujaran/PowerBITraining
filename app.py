@@ -21,10 +21,10 @@ DOWNLOAD_DIR = APP_DIR / "assets" / "downloads"
 SCREENSHOT_DIR = APP_DIR / "assets" / "screenshots"
 PASS_SCORE = 14
 ASSESSMENT_EXPLANATIONS = [
-    "Power BI Desktop is the primary authoring environment for connections, transformations, modelling, DAX and report design.",
-    "Grain states exactly what one row represents. It must be understood before keys, relationships or calculations are designed.",
-    "Import stores a compressed copy in the Power BI model and is normally the fastest interactive starting point for modest datasets.",
-    "Unpivot reshapes repeating columns into attribute-value rows, producing a scalable analytical structure.",
+    "The supported standalone installer is PBIDesktopSetup_x64.exe. The 32-bit edition is no longer supported.",
+    "Report view contains the canvas where report visuals are arranged and designed.",
+    "Transform Data opens Power Query Editor so source quality and data types can be checked before loading.",
+    "Keep Errors retains only rows containing an error in the selected columns, helping you diagnose the cause.",
     "Append stacks compatible tables vertically and therefore adds rows; Merge matches keys to add related columns.",
     "A Left Anti join returns rows from the first, or primary, table that have no matching key in the second table.",
     "Transaction amounts and other event-level numeric observations normally belong in the fact table.",
@@ -337,7 +337,7 @@ def home() -> None:
         <div class="metric-row">
           <div class="metric-card"><strong>10–4</strong><span>Daily workshop timing</span></div>
           <div class="metric-card"><strong>12</strong><span>Guided learning modules</span></div>
-          <div class="metric-card"><strong>11</strong><span>Downloadable lab resources</span></div>
+          <div class="metric-card"><strong>{len(RESOURCES)}</strong><span>Downloadable lab resources</span></div>
           <div class="metric-card"><strong>70%</strong><span>Assessment pass mark</span></div>
         </div>
         """,
@@ -502,136 +502,223 @@ def process_strip(nodes: list[tuple[str, str, str]]) -> None:
     st.markdown(f'<div class="lab-process">{"".join(parts)}</div>', unsafe_allow_html=True)
 
 
-def detailed_workflow_lab() -> None:
-    lab_banner("Interactive analytics workflow laboratory", "Turn a vague reporting request into a decision-ready Power BI solution. The question, filtered dataset, KPIs and delivery path respond together.")
-    model = sample_model_tables()
-    sales = model["Sales"].merge(model["Product"][["ProductKey", "Product", "Category"]], on="ProductKey").merge(model["Customer"][["CustomerKey", "Customer", "Region"]], on="CustomerKey")
-    question = st.selectbox(
-        "Management question",
-        ["Which region drives sales and margin?", "Which product category is underperforming?", "Which customers need management attention?"],
-        key="workflow_question",
-    )
-    audience = st.selectbox("Primary audience", ["CFO", "Finance manager", "Internal auditor"], key="workflow_audience")
-    region = st.selectbox("Analysis scope", ["All regions", "Dubai", "Sharjah", "Ajman"], key="workflow_region")
-    filtered = sales if region == "All regions" else sales[sales["Region"] == region]
-    decision_map = {
-        "Which region drives sales and margin?": "Reallocate commercial focus and challenge regional performance",
-        "Which product category is underperforming?": "Review pricing, cost and product-mix decisions",
-        "Which customers need management attention?": "Prioritise account review and concentration risk",
-    }
-    st.markdown(f'<div class="lab-summary"><b>Decision-ready requirement</b><p>{audience} needs to answer “{question}” for {region.lower()} so the team can {decision_map[question].lower()}.</p></div>', unsafe_allow_html=True)
-    process_strip(
+def lab1_sample_data() -> pd.DataFrame:
+    """Small, authentic extract from the original Lab 1 retail CSV."""
+    return pd.DataFrame(
         [
-            ("Business question", "Decision, audience, grain and benchmark", "active"),
-            ("Power BI Desktop", "Transform, model, calculate and design", "active"),
-            ("Power BI Service", "Publish, refresh, secure and distribute", "active"),
-            (audience, "Consume insight and take action", "active"),
-        ]
-    )
-    metrics = st.columns(3)
-    metrics[0].metric("Net sales", f"AED {filtered['NetAmount'].sum():,.0f}")
-    metrics[1].metric("Gross margin", f"AED {filtered['GrossMargin'].sum():,.0f}")
-    metrics[2].metric("Transactions", len(filtered))
-    group_field = "Region" if "region" in question.lower() else "Category" if "product" in question.lower() else "Customer"
-    summary = filtered.groupby(group_field, as_index=False)[["NetAmount", "GrossMargin"]].sum().set_index(group_field)
-    st.bar_chart(summary)
-    with st.expander("Inspect the transaction grain and business keys"):
-        st.dataframe(filtered[["InvoiceID", "InvoiceDate", "CustomerKey", "ProductKey", "Quantity", "NetAmount", "GrossMargin"]], hide_index=True, use_container_width=True)
-        st.caption("Grain: one row per invoice-product transaction. InvoiceID identifies the transaction; CustomerKey and ProductKey connect descriptive dimensions.")
-    st.download_button("Download workflow sample data (.csv)", filtered.to_csv(index=False), "analytics-workflow-sample.csv", "text/csv", key="workflow_download", use_container_width=True)
-
-
-def detailed_connection_lab() -> None:
-    lab_banner("Interactive source and connection laboratory", "Change the operating requirement to see the connector, storage mode, profiling checks and refresh architecture update.")
-    source = st.selectbox("Source pattern", ["Monthly Excel files", "Governed SQL Server", "SharePoint document library", "Web API"], key="connection_source")
-    row_volume = st.select_slider("Estimated data volume", options=[50_000, 250_000, 1_000_000, 5_000_000, 20_000_000], value=250_000, key="connection_rows")
-    latency = st.selectbox("Required freshness", ["Monthly", "Daily", "Hourly", "Near real time"], key="connection_latency")
-    mapping = {
-        "Monthly Excel files": ("Folder", "Import", "Retain file name and standardise every monthly schema"),
-        "Governed SQL Server": ("SQL Server", "DirectQuery" if latency == "Near real time" and row_volume >= 5_000_000 else "Import", "Use a curated view and confirm query folding"),
-        "SharePoint document library": ("SharePoint Folder", "Import", "Filter the folder path before combining files"),
-        "Web API": ("Web", "Import", "Plan authentication, pagination and rate-limit handling"),
-    }
-    connector, mode, control = mapping[source]
-    process_strip(
-        [
-            (source, f"{row_volume:,} estimated rows", "active"),
-            (connector, "Authenticate and preview in Navigator", "active"),
-            (mode, f"Refresh target: {latency}", "active"),
-            ("Power Query", control, "warning" if source != "Governed SQL Server" else "active"),
-        ]
-    )
-    cols = st.columns(3)
-    cols[0].metric("Recommended connector", connector)
-    cols[1].metric("Starting mode", mode)
-    cols[2].metric("Expected grain", "Invoice line")
-    profile = pd.DataFrame(
-        [
-            ["InvoiceID", "Text", "0%", "Candidate transaction key"],
-            ["InvoiceDate", "Date", "0%", "Required for time analysis"],
-            ["CustomerKey", "Text", "0%", "Dimension foreign key"],
-            ["NetAmount", "Decimal", "0.6%", "Investigate blanks before aggregation"],
+            ["536365", "85123A", "WHITE HANGING HEART T-LIGHT HOLDER", 6, "12/1/2010 8:26", 2.55, "17850", "United Kingdom"],
+            ["536365", "71053", "WHITE METAL LANTERN", 6, "12/1/2010 8:26", 3.39, "17850", "United Kingdom"],
+            ["536365", "84406B", "CREAM CUPID HEARTS COAT HANGER", 8, "12/1/2010 8:26", 2.75, "17850", "United Kingdom"],
+            ["536366", "22633", "HAND WARMER UNION JACK", 6, "12/1/2010 8:28", 1.85, "17850", "United Kingdom"],
+            ["540993", "22423", "REGENCY CAKESTAND 3 TIER", 2, "1/13/2011 9:23", 12.75, "13284", "United Kingdom"],
+            ["540993", "22776", "SWEETHEART CAKESTAND 3 TIER", 1, "1/13/2011 9:23", 9.95, "13284", "United Kingdom"],
+            ["540993", "21471", "STRAWBERRY RAFFIA FOOD COVER", 6, "1/13/2011 9:23", 3.75, "13284", "United Kingdom"],
+            ["540993", "47580", "TEA TIME DES TEA COSY", 6, "1/13/2011 9:23", 2.55, "13284", "United Kingdom"],
         ],
-        columns=["Column", "Expected type", "Sample null rate", "Profiling decision"],
+        columns=["InvoiceNo", "StockCode", "Description", "Quantity", "InvoiceDate", "UnitPrice", "CustomerID", "Country"],
     )
-    st.dataframe(profile, hide_index=True, use_container_width=True)
-    if mode == "DirectQuery":
-        st.warning("DirectQuery is justified only after source performance, concurrency and report interactions are tested. Near-real-time need alone is not enough.")
-    else:
-        st.info("Import is the recommended starting point because it provides fast interaction and modelling flexibility for this requirement.")
-    sample_sales = sample_model_tables()["Sales"]
-    st.download_button("Download source profiling sample (.csv)", sample_sales.to_csv(index=False), "connection-source-sample.csv", "text/csv", key="connection_download", use_container_width=True)
 
 
-def detailed_power_query_lab() -> None:
-    lab_banner("Interactive Power Query transformation laboratory", "Apply repeatable steps to a deliberately messy finance extract. The preview, quality counts, row structure and M translation update after every selection.")
-    messy = pd.DataFrame(
-        {
-            "Account": [" 4000", "5000 ", " 6000", "7000"],
-            "Region": ["Dubai", "", "Sharjah", "Ajman"],
-            "Jan": ["12500", "8200", "N/A", "4100"],
-            "Feb": ["13100", "", "7600", "invalid"],
-            "Mar": ["14000", "9100", "7900", "4500"],
-        }
+def lab1_download_button(key: str) -> None:
+    package = DOWNLOAD_DIR / "lab-1-importing-data-basics.zip"
+    if package.exists():
+        st.download_button(
+            "Download the original Lab 1 CSV (.zip)",
+            data=package.read_bytes(),
+            file_name=package.name,
+            mime="application/zip",
+            key=key,
+            width="stretch",
+        )
+
+
+def detailed_installation_lab() -> None:
+    lab_banner("Power BI Desktop installation guide", "Choose the same supported Microsoft route demonstrated in class. The route, screenshot, steps and launch checklist update together.")
+    route = st.radio("Installation route", ["Microsoft Store · recommended", "Direct 64-bit installer"], horizontal=True, key="install_route")
+    routes = {
+        "Microsoft Store · recommended": {
+            "title": "Microsoft Store",
+            "copy": "Best for most learners: automatic monthly updates, smaller update downloads and no administrator privilege in many environments.",
+            "url": "https://aka.ms/pbidesktopstore",
+            "button": "Open Power BI Desktop in Microsoft Store",
+            "steps": [
+                ("Open Store listing", "Use Microsoft's official Power BI Desktop page", "active"),
+                ("Select Install", "Windows downloads the Store application", "active"),
+                ("Launch Desktop", "Open the installed application", "active"),
+                ("Verify version", "Help > About", "active"),
+            ],
+        },
+        "Direct 64-bit installer": {
+            "title": "Microsoft Download Center",
+            "copy": "Use this route when the Store is blocked or an organization distributes a standalone installer. Select PBIDesktopSetup_x64.exe only.",
+            "url": "https://www.microsoft.com/en-us/download/details.aspx?id=58494",
+            "button": "Open the official 64-bit download page",
+            "steps": [
+                ("Open Download Center", "Microsoft Power BI Desktop", "active"),
+                ("Select Download", "Choose PBIDesktopSetup_x64.exe", "active"),
+                ("Run setup", "Complete the installation wizard", "active"),
+                ("Verify version", "Help > About", "active"),
+            ],
+        },
+    }
+    selected = routes[route]
+    st.markdown(f'<div class="lab-summary"><b>{selected["title"]}</b><p>{selected["copy"]}</p></div>', unsafe_allow_html=True)
+    process_strip(selected["steps"])
+    st.link_button(selected["button"], selected["url"], width="stretch")
+    st.caption("Microsoft releases Power BI Desktop updates monthly. Use the latest supported release and install only from Microsoft.")
+    st.markdown("#### Launch readiness")
+    checks = st.columns(3)
+    installed = checks[0].checkbox("Desktop installed", key="install_check_installed")
+    launched = checks[1].checkbox("Application opens", key="install_check_launch")
+    verified = checks[2].checkbox("Version checked", key="install_check_version")
+    completed = sum([installed, launched, verified])
+    st.progress(completed / 3, text=f"Installation readiness · {completed}/3 checks")
+    if completed == 3:
+        st.success("Power BI Desktop is ready for the interface tour and Lab 1.")
+
+
+def detailed_interface_lab() -> None:
+    lab_banner("Power BI Desktop interface explorer", "Select a component to understand where it appears, what it controls and the first action learners perform there.")
+    components = {
+        "Ribbon": ("Across the top", "Groups commands by task and context.", "Open Home and locate Get data and Transform data."),
+        "View rail": ("Left edge", "Switches between Report, Data and Model views.", "Select each view and observe how the workspace changes."),
+        "Report canvas": ("Centre", "Holds visuals, text, shapes and images for the active report page.", "Select Report view and click the blank canvas."),
+        "Filters pane": ("Right side", "Controls visual-, page- and report-level filters.", "Expand the pane and identify its three filter scopes."),
+        "Visualizations pane": ("Right side", "Chooses visual type, fields and formatting.", "Locate Build visual and Format visual."),
+        "Data pane": ("Far right", "Lists loaded tables, columns, hierarchies and measures.", "After Lab 1, expand the data table and inspect its fields."),
+        "Page tabs": ("Bottom", "Organize the report into separate pages.", "Add a page and rename it Lab 1."),
+    }
+    component = st.selectbox("Explore an interface component", list(components), key="interface_component")
+    location, purpose, first_action = components[component]
+    st.markdown(
+        f'<div class="lab-summary"><b>{component} · {location}</b><p>{purpose}<br><strong>Try it:</strong> {first_action}</p></div>',
+        unsafe_allow_html=True,
     )
-    steps = ["Trim account codes", "Fill missing region", "Convert amounts and replace errors", "Unpivot month columns"]
-    selected_steps = st.multiselect("Applied steps", steps, default=steps[:2], key="pq_steps")
-    cleaned = messy.copy()
-    if steps[0] in selected_steps:
-        cleaned["Account"] = cleaned["Account"].str.strip()
-    if steps[1] in selected_steps:
-        cleaned["Region"] = cleaned["Region"].replace("", None).ffill()
-    if steps[2] in selected_steps:
-        for column in ["Jan", "Feb", "Mar"]:
-            cleaned[column] = pd.to_numeric(cleaned[column], errors="coerce")
-    if steps[3] in selected_steps:
-        cleaned = cleaned.melt(id_vars=["Account", "Region"], var_name="Month", value_name="Amount")
-    nodes = [(step, "Applied and refreshable" if step in selected_steps else "Not yet applied", "active" if step in selected_steps else "") for step in steps]
+    process_strip(
+        [
+            ("Top", "Title bar, search and ribbon", "active" if component == "Ribbon" else ""),
+            ("Left", "Report, Data and Model views", "active" if component == "View rail" else ""),
+            ("Centre", "Report canvas", "active" if component == "Report canvas" else ""),
+            ("Right", "Filters, Visualizations and Data", "active" if "pane" in component.lower() else ""),
+            ("Bottom", "Report page tabs", "active" if component == "Page tabs" else ""),
+        ]
+    )
+    component_table = pd.DataFrame(
+        [[name, details[0], details[1]] for name, details in components.items()],
+        columns=["Component", "Location", "Purpose"],
+    )
+    st.dataframe(component_table, hide_index=True, width="stretch")
+
+
+def detailed_csv_import_lab() -> None:
+    lab_banner("Lab 1 · Importing data.csv", "Follow the original classroom sequence from Get data to Power Query Editor using a live preview from the same retail dataset.")
+    stages = ["1 · Get data > Text/CSV", "2 · Select data.csv", "3 · Verify the preview", "4 · Select Transform Data"]
+    stage = st.selectbox("Current demonstration step", stages, key="csv_import_stage")
+    current = stages.index(stage)
+    nodes = []
+    for index, item in enumerate(stages):
+        title, subtitle = item.split(" · ", 1)
+        nodes.append((title, subtitle, "active" if index <= current else ""))
     process_strip(nodes)
-    before_col, after_col = st.columns(2)
-    with before_col:
-        st.markdown("#### Source preview")
-        st.dataframe(messy, hide_index=True, use_container_width=True)
-    with after_col:
-        st.markdown("#### Live query result")
-        st.dataframe(cleaned.fillna("—"), hide_index=True, use_container_width=True)
-    invalid_values = int(messy[["Jan", "Feb", "Mar"]].isin(["N/A", "invalid", ""]).sum().sum())
-    remaining_errors = 0 if steps[2] in selected_steps else invalid_values
     metrics = st.columns(3)
-    metrics[0].metric("Output rows", len(cleaned))
-    metrics[1].metric("Invalid source values", invalid_values)
-    metrics[2].metric("Unresolved conversion risks", remaining_errors)
-    m_steps = ['Source = Csv.Document(File.Contents(SourcePath))']
-    if steps[0] in selected_steps:
-        m_steps.append('Trimmed = Table.TransformColumns(Source, {{"Account", Text.Trim}})')
-    if steps[1] in selected_steps:
-        m_steps.append('FilledRegion = Table.FillDown(Trimmed, {"Region"})')
-    if steps[2] in selected_steps:
-        m_steps.append('TypedAmounts = Table.TransformColumnTypes(FilledRegion, {{"Jan", type number}, {"Feb", type number}, {"Mar", type number}})')
-    if steps[3] in selected_steps:
-        m_steps.append('Unpivoted = Table.Unpivot(TypedAmounts, {"Jan", "Feb", "Mar"}, "Month", "Amount")')
-    st.code("let\n    " + ",\n    ".join(m_steps) + f"\nin\n    {m_steps[-1].split(' = ')[0]}", language="powerquery")
-    st.download_button("Download messy Power Query sample (.csv)", messy.to_csv(index=False), "messy-finance-extract.csv", "text/csv", key="pq_download", use_container_width=True)
+    metrics[0].metric("Source rows", "541,909")
+    metrics[1].metric("Source columns", "8")
+    metrics[2].metric("Row grain", "Invoice item")
+    preview = lab1_sample_data()
+    st.markdown("#### Text/CSV preview")
+    st.dataframe(preview, hide_index=True, width="stretch")
+    decision = st.radio("Action in the preview window", ["Transform Data · inspect before loading", "Load · send directly to the model"], horizontal=True, key="csv_preview_action")
+    if decision.startswith("Transform"):
+        st.success("Correct for Lab 1. Power Query Editor opens so InvoiceDate can be checked before the table is loaded.")
+    else:
+        st.warning("Return to the preview and choose Transform Data. Loading now would bypass the date-quality check demonstrated in this lab.")
+    st.code(
+        'Source = Csv.Document(File.Contents("data.csv"), [Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None])',
+        language="powerquery",
+    )
+    st.caption("The preview confirms the comma delimiter, header structure and eight expected columns. The source is opened in Power Query rather than loaded immediately.")
+    lab1_download_button("lab1_import_download")
+
+
+def detailed_locale_lab() -> None:
+    lab_banner("Lab 1 · Diagnose and fix InvoiceDate", "Switch the locale and Keep Errors diagnostic to see why the date conversion fails, how the error rows change and when the query is safe to load.")
+    locale = st.radio(
+        "Interpret InvoiceDate using",
+        ["English (United Kingdom) · day/month/year", "English (United States) · month/day/year"],
+        horizontal=True,
+        key="locale_choice",
+    )
+    keep_errors = st.toggle("Home > Keep Rows > Keep Errors", key="locale_keep_errors")
+    sample = lab1_sample_data()
+    if locale.startswith("English (United Kingdom)"):
+        date_format = "%d/%m/%Y %H:%M"
+        locale_code = "en-GB"
+        full_file_errors = 308_950
+    else:
+        date_format = "%m/%d/%Y %H:%M"
+        locale_code = "en-US"
+        full_file_errors = 0
+    parsed = pd.to_datetime(sample["InvoiceDate"], format=date_format, errors="coerce")
+    result = sample[["InvoiceNo", "StockCode", "Description", "InvoiceDate"]].copy()
+    result["Parsed InvoiceDate"] = parsed.dt.strftime("%d %b %Y %H:%M").fillna("Error")
+    result["Conversion status"] = parsed.isna().map({True: "Error", False: "Valid"})
+    error_rows = int(parsed.isna().sum())
+    if keep_errors:
+        result = result[result["Conversion status"] == "Error"]
+    process_strip(
+        [
+            ("Source", "data.csv · InvoiceDate is text", "active"),
+            ("Changed Type", f"Interpret with {locale_code}", "warning" if full_file_errors else "active"),
+            ("Keep Errors", f"{error_rows} error rows in this sample", "active" if keep_errors else ""),
+            ("Using Locale", "English (United States) removes the conversion error", "active" if locale_code == "en-US" else ""),
+            ("Close & Apply", "Load only after validation", ""),
+        ]
+    )
+    metrics = st.columns(3)
+    metrics[0].metric("Sample conversion errors", error_rows)
+    metrics[1].metric("Full-file conversion errors", f"{full_file_errors:,}")
+    metrics[2].metric("Expected source rows", "541,909")
+    st.markdown("#### Live Power Query result")
+    if keep_errors and result.empty:
+        st.success("Keep Errors returns no rows. The English (United States) conversion resolves the date error in this sample.")
+    else:
+        st.dataframe(result, hide_index=True, width="stretch")
+    if locale_code == "en-GB":
+        st.error("1/13/2011 cannot be interpreted as day/month/year because 13 would have to be the month. Dates such as 12/1/2010 are even riskier because they can be silently interpreted as the wrong day and month.")
+    else:
+        st.success("The source uses month/day/year. English (United States) correctly reads 12/1/2010 as 1 December and 1/13/2011 as 13 January.")
+    if keep_errors:
+        st.info("Keep Errors is a temporary diagnostic. Remove the error-only step before the final load or the query would retain only error rows.")
+    st.markdown("#### Generated M step")
+    st.code(
+        f'ChangedTypeWithLocale = Table.TransformColumnTypes(#"Promoted Headers", {{{{"InvoiceDate", type datetime}}}}, "{locale_code}")',
+        language="powerquery",
+    )
+    type_plan = pd.DataFrame(
+        [
+            ["InvoiceNo", "Text", "Preserve invoice identifiers, including credit-note prefixes"],
+            ["StockCode", "Text", "Codes contain letters and numbers"],
+            ["Description", "Text", "Product description"],
+            ["Quantity", "Whole number", "Units per invoice item"],
+            ["InvoiceDate", "Date/Time using en-US", "Source is month/day/year"],
+            ["UnitPrice", "Decimal number", "Unit selling price"],
+            ["CustomerID", "Text", "Identifier rather than a quantity"],
+            ["Country", "Text", "Geographic category"],
+        ],
+        columns=["Column", "Final type", "Reason"],
+    )
+    with st.expander("Review the final data-type plan", expanded=False):
+        st.dataframe(type_plan, hide_index=True, width="stretch")
+    ready_to_load = locale_code == "en-US" and not keep_errors
+    close_apply = st.toggle("Home > Close & Apply", disabled=not ready_to_load, key="locale_close_apply")
+    if not ready_to_load:
+        st.caption("Close & Apply becomes available after selecting English (United States) and removing the temporary Keep Errors step.")
+    elif close_apply:
+        st.success("Loaded to Power BI Desktop: 541,909 rows and eight columns are now available in Data and Report views.")
+    else:
+        st.info("The query is valid. Select Close & Apply to load it to the Power BI Desktop front end.")
+    st.download_button("Download the interactive eight-row sample (.csv)", sample.to_csv(index=False), "lab-1-date-locale-sample.csv", "text/csv", key="locale_sample_download", width="stretch")
+    lab1_download_button("lab1_locale_download")
 
 
 def append_sample_tables(scenario: str, normalize_headers: bool, inject_duplicate: bool) -> list[tuple[str, str, pd.DataFrame]]:
@@ -1384,9 +1471,10 @@ def detailed_capstone_lab() -> None:
 
 def detailed_module_lab(lab_id: int) -> None:
     labs = {
-        1: detailed_workflow_lab,
-        2: detailed_connection_lab,
-        3: detailed_power_query_lab,
+        1: detailed_installation_lab,
+        2: detailed_interface_lab,
+        3: detailed_csv_import_lab,
+        4: detailed_locale_lab,
         5: detailed_model_lab,
         6: detailed_dax_lab,
         7: detailed_visual_lab,
@@ -1396,14 +1484,7 @@ def detailed_module_lab(lab_id: int) -> None:
         11: detailed_governance_lab,
         12: detailed_capstone_lab,
     }
-    if lab_id == 4:
-        append_tab, merge_tab = st.tabs(["Append Queries · Stack rows", "Merge Queries · Match keys"])
-        with append_tab:
-            detailed_append_lab()
-        with merge_tab:
-            detailed_merge_lab()
-    else:
-        labs[lab_id]()
+    labs[lab_id]()
 
 
 def interactive_lab() -> None:
@@ -1416,10 +1497,7 @@ def interactive_lab() -> None:
     detailed_module_lab(lab_id)
     st.divider()
     st.subheader("Power BI screen reference")
-    if lab_id == 4:
-        st.caption("The interactive labs above carry the detailed explanation; these source captures show where both commands appear in Power Query.")
-    else:
-        st.caption("The live laboratory above explains the concept with sample data; this source capture shows where the corresponding feature appears in Power BI.")
+    st.caption("The live laboratory above explains the concept with sample data; this source capture shows where the corresponding feature appears in Power BI.")
     st.subheader(guide["screen_title"])
     screen_tabs = st.tabs([screen[0] for screen in guide["screens"]]) if len(guide["screens"]) > 1 else [st.container()]
     for tab, (label, filename, caption, notices) in zip(screen_tabs, guide["screens"]):
@@ -1443,56 +1521,29 @@ def interactive_lab() -> None:
     st.divider()
     st.subheader("Check your understanding")
     if lab_id == 1:
-        question = st.text_input("Rewrite the business request", "Show me sales")
-        grain = st.selectbox("Row grain", ["Invoice line", "Invoice header", "Monthly country total"])
-        action = st.selectbox("Decision", ["Investigate margin shortfall", "Approve budget", "Review customer concentration"])
-        st.success(f"Decision-ready framing: **At {grain.lower()} level, which drivers should management examine to {action.lower()}?**")
-        st.caption(f"Original request: {question}")
+        installer = st.radio("Direct download file", ["PBIDesktopSetup_x64.exe", "PBIDesktopSetup.exe (32-bit)", "A file from an unofficial download site"], index=None, key="install_control_answer")
+        if installer == "PBIDesktopSetup_x64.exe":
+            st.success("Correct. The supported standalone installer is the 64-bit x64 file from Microsoft.")
+        elif installer:
+            st.warning("Use the official Microsoft source and select PBIDesktopSetup_x64.exe.")
     elif lab_id == 2:
-        rows = st.slider("Estimated rows", 10_000, 10_000_000, 250_000, 10_000)
-        realtime = st.toggle("Near-real-time visibility is essential")
-        governed = st.toggle("Source is a governed analytical database")
-        recommendation = "Consider DirectQuery and test performance" if rows > 2_000_000 and realtime and governed else "Import is the sensible starting point"
-        st.metric("Recommended starting mode", recommendation)
+        interface_answer = st.selectbox("Where do learners switch between Report, Data and Model views?", ["Choose an answer", "Left view rail", "Report canvas", "Page tabs", "Microsoft Store"])
+        if interface_answer == "Left view rail":
+            st.success("Correct. The view icons are on the left edge of Power BI Desktop.")
+        elif interface_answer != "Choose an answer":
+            st.warning("Return to the full interface screenshot and locate the vertical view icons on the left.")
     elif lab_id == 3:
-        data = pd.DataFrame({"Account": ["4000", " 5000", "6000"], "Amount": ["1,250.00", "N/A", "875.50"], "Month": ["Jan", "Jan", None]})
-        st.write("Source preview")
-        st.dataframe(data, hide_index=True, use_container_width=True)
-        trim = st.checkbox("Trim account codes")
-        replace = st.checkbox("Replace invalid amount with null")
-        fill = st.checkbox("Fill missing month down")
-        cleaned = data.copy()
-        if trim: cleaned["Account"] = cleaned["Account"].str.strip()
-        if replace: cleaned["Amount"] = cleaned["Amount"].replace("N/A", None)
-        if fill: cleaned["Month"] = cleaned["Month"].ffill()
-        st.write("Result")
-        st.dataframe(cleaned, hide_index=True, use_container_width=True)
+        import_answer = st.radio("Why select Transform Data instead of Load?", ["To inspect and correct data before loading", "To publish immediately", "To convert the CSV into a PDF", "To skip Power Query"], index=None, key="csv_control_answer")
+        if import_answer == "To inspect and correct data before loading":
+            st.success("Correct. Lab 1 must investigate InvoiceDate in Power Query before loading.")
+        elif import_answer:
+            st.warning("Transform Data opens Power Query Editor for the quality check.")
     elif lab_id == 4:
-        append_check, merge_check = st.tabs(["Append check", "Merge check"])
-        with append_check:
-            append_answer = st.radio(
-                "January and February invoice files have the same grain and columns. Which operation creates one consolidated sales table?",
-                ["Append Queries", "Merge Queries", "Create relationship", "Group By"],
-                index=None,
-                horizontal=True,
-                key="append_control_answer",
-            )
-            if append_answer == "Append Queries":
-                st.success("Correct. Append stacks the February rows below the January rows.")
-            elif append_answer:
-                st.warning("Review the row-flow diagram: the files describe the same kind of transaction, so they should be stacked vertically.")
-        with merge_check:
-            control_answer = st.radio(
-                "Which join should an accountant use to list Sales Orders that have no Customer Master match?",
-                ["Inner", "Left Outer", "Left Anti", "Right Anti"],
-                index=None,
-                horizontal=True,
-                key="merge_control_answer",
-            )
-            if control_answer == "Left Anti":
-                st.success("Correct. Left Anti keeps only non-matching rows from the primary table.")
-            elif control_answer:
-                st.warning("Review the highlighted regions above: the exception population is the primary-only region.")
+        locale_answer = st.radio("How should 1/13/2011 be interpreted in this source?", ["13 January 2011 using English (United States)", "1st day of the 13th month", "13 January using any locale", "It should be deleted"], index=None, key="locale_control_answer")
+        if locale_answer == "13 January 2011 using English (United States)":
+            st.success("Correct. The source follows month/day/year and must be typed using English (United States).")
+        elif locale_answer:
+            st.warning("The value reveals the locale: 13 can be the day, but never the month.")
     elif lab_id == 5:
         duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension")
         st.write("Relationship: **Product (one) → Sales (many)**" if not duplicate else "Relationship cannot remain one-to-many because the dimension key is no longer unique.")
