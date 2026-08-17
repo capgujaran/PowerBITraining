@@ -1540,7 +1540,11 @@ def detailed_module_lab(lab_id: int) -> None:
 def interactive_lab() -> None:
     page_header("See it, then build it", "Power BI guided lab", "Choose a topic to study the relevant Power BI screen, follow the exact click path and reproduce the technique in the supplied practice file.")
     labels = {f"{m['code']} · {m['title']}": m for m in MODULES}
-    selected = labels[st.selectbox("Interactive example", list(labels))]
+    topic_labels = list(labels)
+    if st.session_state.get("interactive_lab_topic") not in labels:
+        st.session_state["interactive_lab_topic"] = topic_labels[0]
+    current_topic = st.session_state["interactive_lab_topic"]
+    selected = labels[current_topic]
     st.markdown(f"### {selected['title']}")
     lab_id = selected["id"]
     guide = TOOL_LABS[lab_id]
@@ -1653,6 +1657,27 @@ def interactive_lab() -> None:
         controls = ["Source totals reconciled", "Relationships tested", "Measures validated under filters", "Exceptions drill to evidence", "Assumptions documented", "Five-minute story rehearsed"]
         done = sum(st.checkbox(item, key=f"cap_{i}") for i, item in enumerate(controls))
         st.progress(done / len(controls), text=f"Capstone readiness · {done}/{len(controls)} controls")
+
+    st.divider()
+    st.markdown("#### Continue learning")
+    topic_index = topic_labels.index(current_topic)
+    previous_column, position_column, next_column = st.columns([1, 1.35, 1])
+    if previous_column.button("← Previous topic", disabled=topic_index == 0, key="interactive_previous", width="stretch"):
+        st.session_state["interactive_lab_topic"] = topic_labels[topic_index - 1]
+        st.rerun()
+    position_column.markdown(
+        f'<div class="lab-summary" style="text-align:center;margin:0"><b>Topic {topic_index + 1} of {len(topic_labels)}</b><p>{selected["code"]} · {selected["title"]}</p></div>',
+        unsafe_allow_html=True,
+    )
+    if next_column.button("Next topic →", disabled=topic_index == len(topic_labels) - 1, key="interactive_next", type="primary", width="stretch"):
+        st.session_state["interactive_lab_topic"] = topic_labels[topic_index + 1]
+        st.rerun()
+    st.selectbox(
+        "Jump to another topic",
+        topic_labels,
+        key="interactive_lab_topic",
+        help="Use this list when you want to move directly to a specific course topic.",
+    )
 
 
 def assessment_grade(percentage: int) -> str:
