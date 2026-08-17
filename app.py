@@ -11,7 +11,7 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 import pandas as pd
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from course_data import ASSESSMENT, MODULES, RESOURCES, SCHEDULE, TOOL_LABS
 
@@ -577,8 +577,38 @@ def detailed_installation_lab() -> None:
         st.success("Power BI Desktop is ready for the interface tour and Lab 1.")
 
 
+@st.cache_data(show_spinner=False)
+def highlighted_interface_screenshot(component: str) -> bytes:
+    """Return the Power BI interface screenshot with one component emphasized."""
+    regions = {
+        "Ribbon": [(0, 53, 1919, 240)],
+        "View rail": [(0, 240, 62, 1045)],
+        "Report canvas": [(145, 240, 1467, 984)],
+        "Filters pane": [(1550, 240, 1601, 1045)],
+        "Visualizations pane": [(1600, 240, 1872, 1045)],
+        "Data pane": [(1871, 240, 1919, 1045)],
+        "Page tabs": [(61, 983, 300, 1045)],
+    }
+    with Image.open(SCREENSHOT_DIR / "01-power-bi-desktop-interface.png") as source:
+        original = source.convert("RGBA")
+    dimmed = Image.alpha_composite(original, Image.new("RGBA", original.size, (12, 27, 36, 118)))
+    for box in regions[component]:
+        dimmed.paste(original.crop(box), box)
+        highlight = Image.new("RGBA", original.size, (0, 0, 0, 0))
+        highlight_draw = ImageDraw.Draw(highlight)
+        highlight_draw.rounded_rectangle(box, radius=8, fill=(242, 200, 17, 48), outline=(242, 200, 17, 255), width=8)
+        dimmed = Image.alpha_composite(dimmed, highlight)
+    buffer = BytesIO()
+    dimmed.convert("RGB").save(buffer, format="PNG", optimize=True)
+    return buffer.getvalue()
+
+
+def select_interface_component(component: str) -> None:
+    st.session_state["interface_component"] = component
+
+
 def detailed_interface_lab() -> None:
-    lab_banner("Power BI Desktop interface explorer", "Select a component to understand where it appears, what it controls and the first action learners perform there.")
+    lab_banner("Power BI Desktop interface explorer", "Select a component and the matching area will be highlighted directly on the Power BI Desktop screenshot.")
     components = {
         "Ribbon": ("Across the top", "Groups commands by task and context.", "Open Home and locate Get data and Transform data."),
         "View rail": ("Left edge", "Switches between Report, Data and Model views.", "Select each view and observe how the workspace changes."),
@@ -588,20 +618,40 @@ def detailed_interface_lab() -> None:
         "Data pane": ("Far right", "Lists loaded tables, columns, hierarchies and measures.", "After Lab 1, expand the data table and inspect its fields."),
         "Page tabs": ("Bottom", "Organize the report into separate pages.", "Add a page and rename it Lab 1."),
     }
-    component = st.selectbox("Explore an interface component", list(components), key="interface_component")
+    button_labels = {
+        "Ribbon": "Top · Ribbon",
+        "View rail": "Left · Views",
+        "Report canvas": "Centre · Canvas",
+        "Filters pane": "Right · Filters",
+        "Visualizations pane": "Right · Visualizations",
+        "Data pane": "Far right · Data",
+        "Page tabs": "Bottom · Pages",
+    }
+    if st.session_state.get("interface_component") not in components:
+        st.session_state["interface_component"] = "Ribbon"
+    component = st.session_state["interface_component"]
+    st.caption("Click a component to locate it in the screenshot.")
+    first_row = st.columns(4)
+    second_row = st.columns(3)
+    for column, name in zip(first_row + second_row, components):
+        column.button(
+            button_labels[name],
+            key=f"interface_select_{name.lower().replace(' ', '_')}",
+            type="primary" if component == name else "secondary",
+            on_click=select_interface_component,
+            args=(name,),
+            width="stretch",
+        )
+    component = st.session_state["interface_component"]
     location, purpose, first_action = components[component]
     st.markdown(
-        f'<div class="lab-summary"><b>{component} · {location}</b><p>{purpose}<br><strong>Try it:</strong> {first_action}</p></div>',
+        f'<div class="lab-summary"><b>Highlighted: {component} · {location}</b><p>{purpose}<br><strong>Try it:</strong> {first_action}</p></div>',
         unsafe_allow_html=True,
     )
-    process_strip(
-        [
-            ("Top", "Title bar, search and ribbon", "active" if component == "Ribbon" else ""),
-            ("Left", "Report, Data and Model views", "active" if component == "View rail" else ""),
-            ("Centre", "Report canvas", "active" if component == "Report canvas" else ""),
-            ("Right", "Filters, Visualizations and Data", "active" if "pane" in component.lower() else ""),
-            ("Bottom", "Report page tabs", "active" if component == "Page tabs" else ""),
-        ]
+    st.image(
+        highlighted_interface_screenshot(component),
+        caption=f"{component} highlighted in Power BI Desktop · {location}",
+        width="stretch",
     )
     component_table = pd.DataFrame(
         [[name, details[0], details[1]] for name, details in components.items()],
