@@ -323,7 +323,7 @@ def home() -> None:
         f"""
         <div class="hero">
           <div>
-            <span class="pill">3 DAYS</span><span class="pill">18 CONTACT HOURS</span><span class="pill">12 MODULES</span>
+            <span class="pill">3 DAYS</span><span class="pill">18 CONTACT HOURS</span><span class="pill">14 MODULES</span>
             <h1>Power BI for finance, reporting and audit analytics</h1>
             <p>Welcome, {learner}. Move from raw files to a governed, decision-ready Power BI solution through guided concepts, visual laboratories, downloadable practice files and a management capstone.</p>
           </div>
@@ -361,7 +361,7 @@ def module_card(module: dict) -> None:
 
 
 def curriculum() -> None:
-    page_header("Guided pathway", "Curriculum", "Twelve modules combine explanation, practical examples, guided labs and quick knowledge checks.")
+    page_header("Guided pathway", "Curriculum", "Fourteen modules combine explanation, practical examples, guided labs and quick knowledge checks.")
     day_filter = st.segmented_control("Day", ["All", "Day 1", "Day 2", "Day 3"], default="All")
     filtered = MODULES if day_filter == "All" else [m for m in MODULES if m["day"] == int(day_filter[-1])]
     options = {f"{m['code']} · {m['title']}": m for m in filtered}
@@ -661,7 +661,7 @@ def detailed_interface_lab() -> None:
 
 
 def detailed_csv_import_lab() -> None:
-    lab_banner("Lab 1 · Importing data.csv", "Follow the original classroom sequence from Get data to Power Query Editor using a live preview from the same retail dataset.")
+    lab_banner("Lab 1 · Importing data.csv", "Understand every control in the Text/CSV preview, then decide whether the data is ready to load or must first be inspected in Power Query Editor.")
     stages = ["1 · Get data > Text/CSV", "2 · Select data.csv", "3 · Verify the preview", "4 · Select Transform Data"]
     stage = st.selectbox("Current demonstration step", stages, key="csv_import_stage")
     current = stages.index(stage)
@@ -674,14 +674,41 @@ def detailed_csv_import_lab() -> None:
     metrics[0].metric("Source rows", "541,909")
     metrics[1].metric("Source columns", "8")
     metrics[2].metric("Row grain", "Invoice item")
+    preview_screen = SCREENSHOT_DIR / "02-text-csv-preview.png"
+    if preview_screen.exists():
+        show_course_image(
+            preview_screen,
+            "Text/CSV preview for data.csv · verify the parsing controls before choosing Load or Transform Data",
+        )
+    settings = pd.DataFrame(
+        [
+            ["File Origin", "How Power BI decodes the file's characters", "Wrong encoding can produce corrupted symbols or text"],
+            ["Delimiter · Comma", "Where one column ends and the next begins", "Wrong delimiter can collapse fields or shift values into the wrong columns"],
+            ["Data Type Detection · first 200 rows", "Infers headers and likely types from a sample", "Later rows may differ, so inferred types can still create errors or incorrect values"],
+            ["Preview grid", "A sample of the parsed rows and columns", "Confirms structure, but does not validate all 541,909 rows"],
+        ],
+        columns=["Screen control", "What it controls", "Implication"],
+    )
+    st.markdown("#### What this screen is telling you")
+    st.dataframe(settings, hide_index=True, width="stretch")
     preview = lab1_sample_data()
-    st.markdown("#### Text/CSV preview")
+    st.markdown("#### Live sample of the parsed data")
     st.dataframe(preview, hide_index=True, width="stretch")
+    load_choices = pd.DataFrame(
+        [
+            ["Load", "Accepts the current import settings and loads the table into the model now", "Fast for trusted, analysis-ready data", "Incorrect types or hidden errors can enter the model and consume model resources before review"],
+            ["Transform Data", "Opens Power Query Editor without loading the result yet", "Profile, filter, rename and type columns; every step is recorded and repeatable", "Loading waits until Close & Apply"],
+        ],
+        columns=["Choice", "Immediate result", "Benefit", "Implication"],
+    )
+    st.markdown("#### Load or Transform Data?")
+    st.dataframe(load_choices, hide_index=True, width="stretch")
+    st.info("Neither option edits data.csv. Power Query reads the source and stores a refreshable set of instructions inside the Power BI file.")
     decision = st.radio("Action in the preview window", ["Transform Data · inspect before loading", "Load · send directly to the model"], horizontal=True, key="csv_preview_action")
     if decision.startswith("Transform"):
-        st.success("Correct for Lab 1. Power Query Editor opens so InvoiceDate can be checked before the table is loaded.")
+        st.success("Correct for Lab 1. Power Query Editor opens first so InvoiceDate can be profiled, typed with the correct locale and checked before Close & Apply loads the result.")
     else:
-        st.warning("Return to the preview and choose Transform Data. Loading now would bypass the date-quality check demonstrated in this lab.")
+        st.warning("Load would accept the current inference and import the table immediately. You could transform it later, but the date-quality check would occur after the first load, so return to the preview and choose Transform Data for this lab.")
     st.code(
         'Source = Csv.Document(File.Contents("data.csv"), [Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None])',
         language="powerquery",
@@ -691,7 +718,23 @@ def detailed_csv_import_lab() -> None:
 
 
 def detailed_locale_lab() -> None:
-    lab_banner("Lab 1 · Diagnose and fix InvoiceDate", "Switch the locale and Keep Errors diagnostic to see why the date conversion fails, how the error rows change and when the query is safe to load.")
+    lab_banner("Lab 1 · Clean, validate and reconcile", "Diagnose the date error, rebuild the type sequence in the correct order, validate all typed columns and check control totals before loading.")
+    st.markdown("#### Required transformation sequence")
+    cleaning_steps = pd.DataFrame(
+        [
+            [1, "Diagnose", "Use Keep Errors to inspect the initial InvoiceDate failures"],
+            [2, "Reset", "Remove Keep Errors and the automatically created Changed Type step"],
+            [3, "Apply locale", "Convert InvoiceDate to Date/Time using English (United States)"],
+            [4, "Detect types", "Use Transform > Detect Data Type for the remaining columns"],
+            [5, "Correct identifier", "Change InvoiceNo to Text and choose Replace Current"],
+            [6, "Validate again", "Run Keep Errors across the typed data, then remove the temporary step"],
+            [7, "Reconcile", "Check the InvoiceNo non-null count and total Quantity"],
+            [8, "Load", "Use Close & Apply only after the controls pass"],
+        ],
+        columns=["Step", "Purpose", "Action"],
+    )
+    st.dataframe(cleaning_steps, hide_index=True, width="stretch")
+    st.info("Why remove the automatic Changed Type step? It attempted type conversion before the month/day/year locale was defined. Rebuilding the sequence makes the date interpretation explicit and refreshable.")
     locale = st.radio(
         "Interpret InvoiceDate using",
         ["English (United Kingdom) · day/month/year", "English (United States) · month/day/year"],
@@ -718,9 +761,11 @@ def detailed_locale_lab() -> None:
     process_strip(
         [
             ("Source", "data.csv · InvoiceDate is text", "active"),
-            ("Changed Type", f"Interpret with {locale_code}", "warning" if full_file_errors else "active"),
-            ("Keep Errors", f"{error_rows} error rows in this sample", "active" if keep_errors else ""),
-            ("Using Locale", "English (United States) removes the conversion error", "active" if locale_code == "en-US" else ""),
+            ("Using Locale", f"Interpret InvoiceDate with {locale_code}", "warning" if full_file_errors else "active"),
+            ("Detect Type", "Assign remaining column types", "active" if locale_code == "en-US" else ""),
+            ("InvoiceNo · Text", "Replace Current", "active" if locale_code == "en-US" else ""),
+            ("Keep Errors", f"{error_rows} sample errors", "active" if keep_errors else ""),
+            ("Statistics", "Count invoices and sum quantity", "active" if locale_code == "en-US" and not keep_errors else ""),
             ("Close & Apply", "Load only after validation", ""),
         ]
     )
@@ -739,26 +784,35 @@ def detailed_locale_lab() -> None:
         st.success("The source uses month/day/year. English (United States) correctly reads 12/1/2010 as 1 December and 1/13/2011 as 13 January.")
     if keep_errors:
         st.info("Keep Errors is a temporary diagnostic. Remove the error-only step before the final load or the query would retain only error rows.")
-    st.markdown("#### Generated M step")
+    st.markdown("#### Generated locale and type steps")
     st.code(
-        f'ChangedTypeWithLocale = Table.TransformColumnTypes(#"Promoted Headers", {{{{"InvoiceDate", type datetime}}}}, "{locale_code}")',
+        f'''#"Changed Type with Locale" = Table.TransformColumnTypes(#"Promoted Headers", {{{{"InvoiceDate", type datetime}}}}, "{locale_code}"),
+#"Changed Type" = Table.TransformColumnTypes(#"Changed Type with Locale", {{{{"InvoiceNo", type text}}, {{"StockCode", type text}}, {{"Description", type text}}, {{"Quantity", Int64.Type}}, {{"InvoiceDate", type datetime}}, {{"UnitPrice", type number}}, {{"CustomerID", Int64.Type}}, {{"Country", type text}}}})''',
         language="powerquery",
     )
     type_plan = pd.DataFrame(
         [
-            ["InvoiceNo", "Text", "Preserve invoice identifiers, including credit-note prefixes"],
+            ["InvoiceNo", "Text", "Preserve invoice identifiers, including sales-return prefixes"],
             ["StockCode", "Text", "Codes contain letters and numbers"],
             ["Description", "Text", "Product description"],
             ["Quantity", "Whole number", "Units per invoice item"],
             ["InvoiceDate", "Date/Time using en-US", "Source is month/day/year"],
             ["UnitPrice", "Decimal number", "Unit selling price"],
-            ["CustomerID", "Text", "Identifier rather than a quantity"],
+            ["CustomerID", "Whole number", "Detected numeric customer identifier in this classroom query"],
             ["Country", "Text", "Geographic category"],
         ],
         columns=["Column", "Final type", "Reason"],
     )
     with st.expander("Review the final data-type plan", expanded=False):
         st.dataframe(type_plan, hide_index=True, width="stretch")
+    st.markdown("#### Validation statistics")
+    stats_left, stats_right = st.columns(2)
+    with stats_left:
+        st.code('List.NonNullCount(#"Changed Type"[InvoiceNo])', language="powerquery")
+        st.caption("Counts non-null InvoiceNo values. If InvoiceNo can be null, this is not automatically the same as total table rows.")
+    with stats_right:
+        st.code('List.Sum(#"Changed Type"[Quantity])', language="powerquery")
+        st.caption("Returns net quantity. Negative return or cancellation rows reduce the total and should not be silently discarded.")
     ready_to_load = locale_code == "en-US" and not keep_errors
     close_apply = st.toggle("Home > Close & Apply", disabled=not ready_to_load, key="locale_close_apply")
     if not ready_to_load:
@@ -767,8 +821,192 @@ def detailed_locale_lab() -> None:
         st.success("Loaded to Power BI Desktop: 541,909 rows and eight columns are now available in Data and Report views.")
     else:
         st.info("The query is valid. Select Close & Apply to load it to the Power BI Desktop front end.")
+    with st.expander("Next topic · Create InvoiceValuePQ with a Custom Column", expanded=False):
+        st.write("The cleaning query ends at `#\"Changed Type\"`. The next topic extends that validated result with a calculated column and then assigns the new column a numeric type.")
+        st.code(
+            '''#"Added Custom" = Table.AddColumn(#"Changed Type", "InvoiceValuePQ", each [Quantity] * [UnitPrice]),
+#"Changed Type1" = Table.TransformColumnTypes(#"Added Custom", {{"InvoiceValuePQ", type number}})''',
+            language="powerquery",
+        )
     st.download_button("Download the interactive eight-row sample (.csv)", sample.to_csv(index=False), "lab-1-date-locale-sample.csv", "text/csv", key="locale_sample_download", width="stretch")
     lab1_download_button("lab1_locale_download")
+
+
+def detailed_custom_column_lab() -> None:
+    lab_banner("Lab 1 · Create InvoiceValuePQ and InvoiceType", "Build one arithmetic custom column, then use Text.StartsWith and conditional M logic to bifurcate Sales and Sales Returns.")
+    sample = lab1_sample_data()
+    credit_note = pd.DataFrame(
+        [["C536379", "D", "Discount", -1, "12/1/2010 9:41", 27.50, "14527", "United Kingdom"]],
+        columns=sample.columns,
+    )
+    sample = pd.concat([sample, credit_note], ignore_index=True)
+    sample["InvoiceValuePQ"] = sample["Quantity"] * sample["UnitPrice"]
+    sample["InvoiceType"] = sample["InvoiceNo"].str.startswith("C").map({True: "Sales Returns", False: "Sales"})
+    process_strip(
+        [
+            ("Changed Type", "Clean inputs with valid types", "active"),
+            ("InvoiceValuePQ", "Quantity × UnitPrice", "active"),
+            ("InvoiceType", "C prefix → Sales Returns", "active"),
+            ("Validate", "Check errors and sample values", ""),
+            ("Close & Apply", "Load the extended query", ""),
+        ]
+    )
+    st.markdown("#### 1 · Build the arithmetic column")
+    column_name = st.text_input("New column name", value="InvoiceValuePQ", key="custom_column_name")
+    formula = st.text_input("Custom column formula", value="[Quantity] * [UnitPrice]", key="custom_column_formula")
+    if column_name == "InvoiceValuePQ" and formula.replace(" ", "") == "[Quantity]*[UnitPrice]":
+        st.success("Valid setup. Power Query will evaluate the multiplication once for each row during refresh.")
+    else:
+        st.warning("For this lab, use InvoiceValuePQ and the formula [Quantity] * [UnitPrice].")
+    st.markdown("#### 2 · Bifurcate Sales and Sales Returns")
+    invoice_type_name = st.text_input("Conditional column name", value="InvoiceType", key="invoice_type_column_name")
+    invoice_type_formula = st.text_input(
+        "Conditional custom column formula",
+        value='if Text.StartsWith([InvoiceNo], "C") then "Sales Returns" else "Sales"',
+        key="invoice_type_formula",
+    )
+    normalized_type_formula = "".join(invoice_type_formula.split())
+    expected_type_formula = 'ifText.StartsWith([InvoiceNo],"C")then"SalesReturns"else"Sales"'
+    if invoice_type_name == "InvoiceType" and normalized_type_formula == expected_type_formula:
+        st.success("Valid classification. C-prefixed InvoiceNo values become Sales Returns; all other values become Sales.")
+    else:
+        st.warning('Use InvoiceType and: if Text.StartsWith([InvoiceNo], "C") then "Sales Returns" else "Sales".')
+    st.dataframe(
+        sample[["InvoiceNo", "Quantity", "UnitPrice", "InvoiceValuePQ", "InvoiceType"]].style.format({"UnitPrice": "{:.2f}", "InvoiceValuePQ": "{:.2f}"}),
+        hide_index=True,
+        width="stretch",
+    )
+    st.markdown("#### Generated M steps")
+    st.code(
+        '''#"Added Custom" = Table.AddColumn(#"Changed Type", "InvoiceValuePQ", each [Quantity] * [UnitPrice]),
+#"Changed Type1" = Table.TransformColumnTypes(#"Added Custom", {{"InvoiceValuePQ", type number}}),
+#"Added Custom1" = Table.AddColumn(#"Changed Type1", "InvoiceType", each if Text.StartsWith([InvoiceNo], "C") then "Sales Returns" else "Sales"),
+#"Changed Type2" = Table.TransformColumnTypes(#"Added Custom1", {{"InvoiceType", type text}})''',
+        language="powerquery",
+    )
+    with st.expander("View the complete transformation query", expanded=False):
+        st.code(
+            '''let
+    Source = Csv.Document(File.Contents("data.csv"), [Delimiter=",", Columns=8, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"Changed Type with Locale" = Table.TransformColumnTypes(#"Promoted Headers", {{"InvoiceDate", type datetime}}, "en-US"),
+    #"Changed Type" = Table.TransformColumnTypes(#"Changed Type with Locale", {{"InvoiceNo", type text}, {"StockCode", type text}, {"Description", type text}, {"Quantity", Int64.Type}, {"InvoiceDate", type datetime}, {"UnitPrice", type number}, {"CustomerID", Int64.Type}, {"Country", type text}}),
+    #"Added Custom" = Table.AddColumn(#"Changed Type", "InvoiceValuePQ", each [Quantity] * [UnitPrice]),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Added Custom", {{"InvoiceValuePQ", type number}}),
+    #"Added Custom1" = Table.AddColumn(#"Changed Type1", "InvoiceType", each if Text.StartsWith([InvoiceNo], "C") then "Sales Returns" else "Sales"),
+    #"Changed Type2" = Table.TransformColumnTypes(#"Added Custom1", {{"InvoiceType", type text}})
+in
+    #"Changed Type2"''',
+            language="powerquery",
+        )
+        st.caption("The course uses a portable data.csv path. Learners should browse to their own Lab 1 file rather than copy a trainer-specific Windows path.")
+    st.markdown(
+        '<div class="screen-note"><b>Read the expressions</b><ul><li><code>Table.AddColumn</code> adds a field to the incoming table.</li><li><code>each</code> evaluates the expression for the current row.</li><li><code>[Quantity]</code>, <code>[UnitPrice]</code> and <code>[InvoiceNo]</code> read values from that row.</li><li><code>Text.StartsWith</code> returns true when InvoiceNo begins with the exact prefix C.</li><li><code>if…then…else</code> returns Sales Returns when true and Sales otherwise.</li><li>The following type steps assign Decimal Number and Text to the new columns.</li></ul></div>',
+        unsafe_allow_html=True,
+    )
+    expected = 6 * 2.55
+    learner_value = st.number_input("Validation check · 6 units × 2.55", min_value=0.0, step=0.01, key="custom_column_check")
+    if math.isclose(learner_value, expected, abs_tol=0.001):
+        st.success("Correct: InvoiceValuePQ is 15.30 for this row.")
+    elif learner_value:
+        st.warning("Recheck Quantity × UnitPrice. The expected value is 15.30.")
+    classification = st.radio("Classification check · What should C536379 become?", ["Choose an answer", "Sales Returns", "Sales"], key="invoice_type_check")
+    if classification == "Sales Returns":
+        st.success("Correct. C536379 starts with C, so Text.StartsWith returns true.")
+    elif classification == "Sales":
+        st.warning("C536379 begins with C and should be classified as Sales Returns.")
+    lab1_download_button("lab1_custom_column_download")
+
+
+def detailed_m_vs_dax_lab() -> None:
+    lab_banner("Lab 1 · Power Query M versus DAX", "Create the same row-level invoice value in both engines, reconcile the results in matrices and learn why matching numbers do not make the two calculation paths interchangeable.")
+    comparison = pd.DataFrame(
+        [
+            ["Primary role", "Connect, clean and shape data", "Model-side row logic", "Interactive aggregation"],
+            ["Evaluation time", "During data refresh, before model load", "During model refresh, after data is loaded", "When a report visual queries the model"],
+            ["Evaluation context", "Transformation steps and row expressions", "Row context", "Filter context"],
+            ["Stored per row", "Yes, when the result is loaded", "Yes", "No"],
+            ["Best fit", "Stable preparation and reducing data before load", "Required model-side attributes", "Dynamic totals, ratios and KPIs"],
+            ["This lab", "InvoiceValuePQ", "InvoiceValue_DAX", "A future SUM measure"],
+        ],
+        columns=["Question", "Power Query M column", "DAX calculated column", "DAX measure"],
+    )
+    st.markdown("#### Three calculation choices")
+    st.dataframe(comparison, hide_index=True, width="stretch")
+    st.markdown("#### Advantages, disadvantages and when to use each")
+    tradeoffs = pd.DataFrame(
+        [
+            ["Power Query M", "Cleans and reduces data before model storage; repeatable refresh steps; can combine files and sources; may support query folding", "Cannot react to slicers after refresh; complex M can be harder to debug; folding can break after some transformations", "Data cleaning, changing types, filtering rows, merging/appending, parsing text and stable row calculations before load"],
+            ["DAX calculated column", "Can use model relationships and DAX row context; convenient after data is loaded; provides a stored field for rows, axes, grouping and sorting", "Consumes model memory; recalculates only during refresh; does not dynamically change with slicers; often duplicates work that could be done upstream", "A persistent model attribute needed on rows or axes when the logic genuinely belongs in the semantic model"],
+            ["DAX measure", "Responds dynamically to slicers and matrix filters; calculated only when queried; does not store one result per source row", "Cannot serve as a row-level category or relationship key; results depend on filter context; more advanced formulas require careful context reasoning", "Totals, ratios, KPIs, time intelligence and any result that must change with the report's current filters"],
+        ],
+        columns=["Option", "Advantages", "Disadvantages", "Use it when"],
+    )
+    st.dataframe(tradeoffs, hide_index=True, width="stretch")
+    st.markdown(
+        '<div class="screen-note"><b>Fast decision rule</b><ol><li>If the task cleans, reshapes or reduces source data, use <b>Power Query M</b>.</li><li>If the result must exist as a stored row-level field in the model and cannot reasonably be created upstream, consider a <b>DAX calculated column</b>.</li><li>If the result must respond to Country, InvoiceType, date or other report filters, use a <b>DAX measure</b>.</li></ol><p><b>For InvoiceValue:</b> the M and DAX columns demonstrate equivalent row logic. In a production model, a dynamic total is normally exposed as a measure such as <code>Invoice Value = SUM(data[InvoiceValuePQ])</code>.</p></div>',
+        unsafe_allow_html=True,
+    )
+    process_strip(
+        [
+            ("Source CSV", "Quantity and UnitPrice", "active"),
+            ("Power Query M", "Create InvoiceValuePQ before load", "active"),
+            ("Semantic model", "Create InvoiceValue_DAX after load", "active"),
+            ("Matrix", "Aggregate either stored column", "active"),
+            ("Reconcile", "Totals must match", ""),
+        ]
+    )
+    st.markdown("#### Equivalent row calculations")
+    formula_left, formula_right = st.columns(2)
+    with formula_left:
+        st.caption("Power Query M custom column")
+        st.code('each [Quantity] * [UnitPrice]', language="powerquery")
+    with formula_right:
+        st.caption("DAX calculated column")
+        st.code('InvoiceValue_DAX = data[Quantity] * data[UnitPrice]', language="dax")
+    rows = pd.DataFrame(
+        [
+            ["536365", "United Kingdom", "Sales", 6, 2.55],
+            ["536370", "France", "Sales", 24, 3.39],
+            ["536403", "Netherlands", "Sales", 12, 1.85],
+            ["C536379", "United Kingdom", "Sales Returns", -1, 27.50],
+            ["C536383", "Germany", "Sales Returns", -1, 4.65],
+            ["C536391", "France", "Sales Returns", -12, 1.65],
+        ],
+        columns=["InvoiceNo", "Country", "InvoiceType", "Quantity", "UnitPrice"],
+    )
+    rows["InvoiceValuePQ"] = rows["Quantity"] * rows["UnitPrice"]
+    rows["InvoiceValue_DAX"] = rows["Quantity"] * rows["UnitPrice"]
+    rows["Difference"] = rows["InvoiceValuePQ"] - rows["InvoiceValue_DAX"]
+    st.dataframe(
+        rows.style.format({"UnitPrice": "{:,.2f}", "InvoiceValuePQ": "{:,.2f}", "InvoiceValue_DAX": "{:,.2f}", "Difference": "{:,.2f}"}),
+        hide_index=True,
+        width="stretch",
+    )
+    st.success("Row-level reconciliation passes when every Difference is zero.")
+    st.markdown("#### Matrix similarity")
+    matrix_m = rows.pivot_table(index="Country", columns="InvoiceType", values="InvoiceValuePQ", aggfunc="sum", fill_value=0)
+    matrix_dax = rows.pivot_table(index="Country", columns="InvoiceType", values="InvoiceValue_DAX", aggfunc="sum", fill_value=0)
+    matrix_m["Total"] = matrix_m.sum(axis=1)
+    matrix_dax["Total"] = matrix_dax.sum(axis=1)
+    matrix_left, matrix_right = st.columns(2)
+    with matrix_left:
+        st.caption("Matrix A · Sum of InvoiceValuePQ")
+        st.dataframe(matrix_m.style.format("{:,.2f}"), width="stretch")
+    with matrix_right:
+        st.caption("Matrix B · Sum of InvoiceValue_DAX")
+        st.dataframe(matrix_dax.style.format("{:,.2f}"), width="stretch")
+    st.info("The matrices match because both columns contain the same row values and use SUM under the same Country and InvoiceType filters. M performed the calculation before model load; DAX performed it after load during model refresh.")
+    engine_choice = st.radio(
+        "Which engine should calculate a dynamic value that must change with report filters?",
+        ["Choose an answer", "DAX measure", "Power Query custom column", "DAX calculated column"],
+        key="m_dax_engine_choice",
+    )
+    if engine_choice == "DAX measure":
+        st.success("Correct. A measure evaluates at query time under the matrix's filter context.")
+    elif engine_choice != "Choose an answer":
+        st.warning("M columns and DAX calculated columns are processed during refresh. Use a DAX measure for dynamic report-time aggregation.")
+    lab1_download_button("lab1_m_vs_dax_download")
 
 
 def append_sample_tables(scenario: str, normalize_headers: bool, inject_duplicate: bool) -> list[tuple[str, str, pd.DataFrame]]:
@@ -1525,6 +1763,8 @@ def detailed_module_lab(lab_id: int) -> None:
         2: detailed_interface_lab,
         3: detailed_csv_import_lab,
         4: detailed_locale_lab,
+        13: detailed_custom_column_lab,
+        14: detailed_m_vs_dax_lab,
         5: detailed_model_lab,
         6: detailed_dax_lab,
         7: detailed_visual_lab,
@@ -1543,6 +1783,12 @@ def interactive_lab() -> None:
     topic_labels = list(labels)
     if st.session_state.get("interactive_lab_topic") not in labels:
         st.session_state["interactive_lab_topic"] = topic_labels[0]
+    st.selectbox(
+        "Jump to another topic",
+        topic_labels,
+        key="interactive_lab_topic",
+        help="Choose any course topic directly. Your last selection remains active when the page refreshes.",
+    )
     current_topic = st.session_state["interactive_lab_topic"]
     selected = labels[current_topic]
     st.markdown(f"### {selected['title']}")
@@ -1598,6 +1844,18 @@ def interactive_lab() -> None:
             st.success("Correct. The source follows month/day/year and must be typed using English (United States).")
         elif locale_answer:
             st.warning("The value reveals the locale: 13 can be the day, but never the month.")
+    elif lab_id == 13:
+        custom_answer = st.radio("How does the query identify Sales Returns?", ["InvoiceNo starts with C", "Quantity is positive", "Country is blank", "UnitPrice is zero"], index=None, key="custom_column_control_answer")
+        if custom_answer == "InvoiceNo starts with C":
+            st.success("Correct. Text.StartsWith checks InvoiceNo for the C prefix and the conditional returns Sales Returns.")
+        elif custom_answer:
+            st.warning("Return to the InvoiceType formula and inspect the prefix tested by Text.StartsWith.")
+    elif lab_id == 14:
+        dax_answer = st.radio("Why do the two matrix totals match?", ["Both columns use the same row-level multiplication and are summed under the same filters", "M and DAX are the same language", "The visual ignores Country", "All Sales Returns are removed"], index=None, key="m_dax_control_answer")
+        if dax_answer == "Both columns use the same row-level multiplication and are summed under the same filters":
+            st.success("Correct. The business logic and aggregation match, although M and DAX execute at different stages.")
+        elif dax_answer:
+            st.warning("Equivalent results come from equivalent row values and filter/aggregation choices—not from M and DAX being the same engine.")
     elif lab_id == 5:
         duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension")
         st.write("Relationship: **Product (one) → Sales (many)**" if not duplicate else "Relationship cannot remain one-to-many because the dimension key is no longer unique.")
@@ -1672,12 +1930,6 @@ def interactive_lab() -> None:
     if next_column.button("Next topic →", disabled=topic_index == len(topic_labels) - 1, key="interactive_next", type="primary", width="stretch"):
         st.session_state["interactive_lab_topic"] = topic_labels[topic_index + 1]
         st.rerun()
-    st.selectbox(
-        "Jump to another topic",
-        topic_labels,
-        key="interactive_lab_topic",
-        help="Use this list when you want to move directly to a specific course topic.",
-    )
 
 
 def assessment_grade(percentage: int) -> str:

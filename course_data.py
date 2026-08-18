@@ -1,9 +1,9 @@
 """Course content for the three-day Power BI programme."""
 
 SCHEDULE = [
-    {"day": 1, "theme": "Install, explore and import", "focus": "Power BI Desktop installation, interface tour, CSV import, error isolation and locale correction", "modules": "1–4"},
-    {"day": 2, "theme": "Model, calculate and communicate", "focus": "Data modelling, DAX, visual design and report experience", "modules": "5–8"},
-    {"day": 3, "theme": "Automate, audit and publish", "focus": "M language, audit analytics, Power BI Service and capstone", "modules": "9–12"},
+    {"day": 1, "theme": "Install, explore and import", "focus": "Power BI Desktop installation, CSV cleaning, custom columns and an M-versus-DAX comparison", "modules": "1–6"},
+    {"day": 2, "theme": "Model, calculate and communicate", "focus": "Data modelling, DAX, visual design and report experience", "modules": "7–10"},
+    {"day": 3, "theme": "Automate, audit and publish", "focus": "M language, audit analytics, Power BI Service and capstone", "modules": "11–14"},
 ]
 
 MODULES = [
@@ -36,28 +36,58 @@ MODULES = [
     {
         "id": 3, "code": "D1.3", "day": 1, "duration": "55 min",
         "title": "Lab 1: Import the retail CSV",
-        "subtitle": "Connect to data.csv and open it in Power Query Editor",
-        "outcomes": ["Import a comma-separated file with Text/CSV", "Read the preview and confirm the eight source columns", "Choose Transform Data so quality checks happen before loading"],
+        "subtitle": "Read the Text/CSV preview and choose the correct loading path",
+        "outcomes": ["Import a comma-separated file with Text/CSV", "Verify the file origin, delimiter, detected types and eight source columns", "Explain the implications of Load and Transform Data before choosing Transform Data"],
         "concepts": [
-            ("Text/CSV connector", "Home > Get data > Text/CSV reads a delimited file and displays a preview before anything is loaded into the model.", "Select data.csv from the Lab 1 folder and verify that the first row contains the column names.", "Preview the file before accepting it."),
+            ("Read the Text/CSV preview", "Home > Get data > Text/CSV displays a sample before the table enters the model. Confirm that File Origin renders characters correctly, Delimiter separates the file into eight columns and the first row has become the headers.", "For data.csv, use the detected file origin, Comma delimiter and verify InvoiceNo through Country in the preview grid.", "A neat preview confirms parsing, not the quality of every row."),
+            ("Treat detected types as a first guess", "Based on first 200 rows asks Power Query to infer headers and column types from a sample. Later rows can contain different values, so identifiers, decimals and dates still require validation in Power Query Editor.", "InvoiceDate looks plausible in the preview, but the sample does not prove that every month/day value will convert correctly under the current locale.", "Automatic detection is a convenience, not a data-quality control."),
             ("Understand the source", "The original file contains 541,909 retail transaction rows and eight columns: InvoiceNo, StockCode, Description, Quantity, InvoiceDate, UnitPrice, CustomerID and Country.", "One row represents one stock item appearing on an invoice.", "Know the row meaning and expected columns before transforming the data."),
-            ("Transform instead of immediate Load", "Transform Data opens Power Query Editor so types and quality issues can be checked before the table reaches the model. Load bypasses that review step.", "Choose Transform Data because InvoiceDate must be validated and corrected first.", "For this lab, select Transform Data—not Load."),
+            ("Load versus Transform Data", "Load accepts the current import settings and loads the table into the Power BI model immediately. Transform Data opens Power Query Editor first, where repeatable cleaning and type steps can be reviewed before Close & Apply loads the result. Both choices keep the CSV unchanged.", "Choose Transform Data because InvoiceDate must be validated and corrected before 541,909 rows are loaded into the model.", "For this lab, select Transform Data—not Load."),
         ],
-        "lab": ("Import data.csv", "Lab 1 · Retail transactions", ["Home > Get data > Text/CSV", "Select data.csv", "Confirm comma delimiter, headers and eight columns in the preview", "Select Transform Data"], "The data query open in Power Query Editor"),
+        "lab": ("Import data.csv", "Lab 1 · Retail transactions", ["Home > Get data > Text/CSV", "Select data.csv", "Confirm the file origin, comma delimiter, headers and eight columns in the preview", "Note that type detection is based on only the first 200 rows", "Select Transform Data rather than loading immediately"], "The data query open in Power Query Editor"),
         "check": ("Which preview option should be selected for this lab?", ["Transform Data", "Load without inspection", "Cancel", "Publish"], 0, "Transform Data opens Power Query Editor so the date quality issue can be investigated before loading."),
     },
     {
         "id": 4, "code": "D1.4", "day": 1, "duration": "75 min",
         "title": "Lab 1: Find and fix the date error",
-        "subtitle": "Use Keep Errors, locale-aware typing and Close & Apply",
-        "outcomes": ["Use Keep Errors to isolate conversion failures", "Explain why US-formatted dates fail under a different locale", "Apply Date/Time with English (United States) locale and load the corrected query"],
+        "subtitle": "Rebuild the type steps, validate errors and reconcile the clean query",
+        "outcomes": ["Remove the unsafe automatic Changed Type step and apply InvoiceDate with the correct locale", "Use Detect Data Type, correct InvoiceNo to Text and replace the current type conversion", "Re-run Keep Errors as a temporary validation and calculate row-count and quantity statistics before loading"],
         "concepts": [
             ("Keep Errors", "Home > Keep Rows > Keep Errors retains only rows whose selected column contains an error. It is a diagnostic step for understanding the problem rather than a permanent cleanup step.", "Select InvoiceDate and keep errors to expose values that could not be converted.", "Investigate errors before removing or replacing them."),
-            ("The locale problem", "The source stores InvoiceDate as month/day/year. A value such as 1/13/2011 is valid in English (United States) but cannot be read as day/month/year because 13 is not a month.", "Change InvoiceDate to Date/Time using English (United States) locale.", "A date is not fully defined until its format and locale are known."),
-            ("Apply types and load", "After the date is corrected, assign appropriate types to the remaining columns, keep InvoiceNo as text, remove the temporary Keep Errors step and use Close & Apply.", "Power Query replays Source, Promoted Headers, Changed Type with Locale and the remaining type assignments before loading the table.", "Close & Apply only after the query has no unexplained errors."),
+            ("Rebuild the type sequence", "Delete the automatically created Changed Type step because it interpreted InvoiceDate before the source locale was established. First convert InvoiceDate to Date/Time using English (United States), then use Detect Data Type for the remaining columns.", "The safe order is Promoted Headers > Changed Type with Locale > Changed Type.", "Apply the locale-sensitive date conversion before broad automatic type detection."),
+            ("Correct InvoiceNo without adding a conflicting step", "Detect Data Type can interpret InvoiceNo as a number from early rows, but the column also contains identifiers with letters. Change InvoiceNo to Text and choose Replace Current so the existing Changed Type step is corrected instead of stacking another competing type step.", "InvoiceNo remains Text; Quantity becomes Whole Number; UnitPrice becomes Decimal Number.", "Identifiers are labels even when many values contain only digits."),
+            ("Validate, reconcile and load", "Run Keep Errors again across the typed data. If no unexpected errors remain, remove the temporary Keep Errors step so valid rows are not filtered out. Use List.NonNullCount on InvoiceNo and List.Sum on Quantity as control totals, then use Close & Apply.", "List.NonNullCount(#\"Changed Type\"[InvoiceNo]) returns the count of non-null invoice identifiers; List.Sum(#\"Changed Type\"[Quantity]) returns net quantity, including negative return rows.", "A clean query should pass both error validation and control-total reconciliation before loading."),
         ],
-        "lab": ("Diagnose, correct and load InvoiceDate", "Lab 1 · Retail transactions", ["Select InvoiceDate and change it to Date/Time to expose the locale error", "Home > Keep Rows > Keep Errors and inspect the failing values", "Delete the temporary error step, then Data type > Using Locale > Date/Time > English (United States)", "Assign the remaining data types and keep InvoiceNo as text", "Home > Close & Apply and confirm the table is available in Power BI Desktop"], "A loaded retail table with a valid InvoiceDate column"),
+        "lab": ("Clean, validate and reconcile data.csv", "Lab 1 · Retail transactions", ["Use Keep Errors to inspect the initial InvoiceDate conversion failures", "Remove Keep Errors and the automatically created Changed Type step", "InvoiceDate > Data type > Using Locale > Date/Time > English (United States)", "Transform > Detect Data Type to assign the remaining types", "Change InvoiceNo to Text and select Replace Current", "Run Keep Errors again to confirm that no unexpected errors remain, then remove the validation step", "Calculate List.NonNullCount(#\"Changed Type\"[InvoiceNo]) and List.Sum(#\"Changed Type\"[Quantity])", "Home > Close & Apply and confirm the clean table is available in Power BI Desktop"], "A validated and reconciled retail table ready for the next custom-column topic"),
         "check": ("Which locale correctly interprets 1/13/2011 in this source?", ["English (United States)", "A day/month locale", "No locale is needed", "Currency locale only"], 0, "The source uses month/day/year, so English (United States) correctly interprets 1/13/2011 as 13 January 2011."),
+    },
+    {
+        "id": 13, "code": "D1.5", "day": 1, "duration": "45 min",
+        "title": "Create calculated and conditional Custom Columns",
+        "subtitle": "Calculate invoice value and separate Sales from Sales Returns with M",
+        "outcomes": ["Create InvoiceValuePQ with a row-level arithmetic expression", "Use Text.StartsWith to classify InvoiceNo values beginning with C as Sales Returns", "Explain each and if…then…else in the generated M expressions", "Assign explicit data types to both new columns and validate the results"],
+        "concepts": [
+            ("Custom Column", "A Custom Column evaluates an expression for every row during refresh and adds the result to the query before data reaches the model.", "InvoiceValuePQ = [Quantity] * [UnitPrice].", "Build the new column only after the source columns have valid names and types."),
+            ("Generated M", "Power Query records the action as Table.AddColumn. The each keyword defines the calculation applied to the current row, while field names in square brackets read values from that row.", "Table.AddColumn(#\"Changed Type\", \"InvoiceValuePQ\", each [Quantity] * [UnitPrice]).", "Read each as: for each row, perform this expression."),
+            ("Text.StartsWith and conditional logic", "Text.StartsWith returns true when a text value begins with the specified prefix. Combine it with if…then…else to bifurcate invoices: InvoiceNo values beginning with C are Sales Returns; all others are Sales.", "if Text.StartsWith([InvoiceNo], \"C\") then \"Sales Returns\" else \"Sales\".", "InvoiceNo must be Text before applying a text function."),
+            ("Type and validate the results", "Each new custom column should receive an explicit data type. Set InvoiceValuePQ to Decimal Number and InvoiceType to Text, then inspect errors and representative Sales and Sales Returns rows.", "536365 is Sales; C536379 is Sales Returns; six units at 2.55 produce an InvoiceValuePQ of 15.30.", "Correct formulas still need correct output types and reasonableness checks."),
+        ],
+        "lab": ("Add InvoiceValuePQ and InvoiceType", "Cleaned Lab 1 retail query", ["Add Column > Custom Column and create InvoiceValuePQ as [Quantity] * [UnitPrice]", "Change InvoiceValuePQ to Decimal Number", "Add another Custom Column named InvoiceType", "Enter if Text.StartsWith([InvoiceNo], \"C\") then \"Sales Returns\" else \"Sales\"", "Change InvoiceType to Text", "Validate a normal invoice and a C-prefixed sales return", "Confirm Added Custom, Changed Type1, Added Custom1 and Changed Type2 in Applied Steps"], "Typed InvoiceValuePQ and InvoiceType columns calculated during refresh"),
+        "check": ("How does the query identify Sales Returns?", ["InvoiceNo starts with C", "Quantity is always positive", "Country is blank", "UnitPrice is zero"], 0, "Text.StartsWith checks the text prefix of InvoiceNo; a leading C classifies the row as Sales Returns."),
+    },
+    {
+        "id": 14, "code": "D1.6", "day": 1, "duration": "55 min",
+        "title": "Compare Power Query M and DAX",
+        "subtitle": "Create the same invoice value in both engines and compare the matrix results",
+        "outcomes": ["Explain where and when Power Query M and DAX calculations run", "Create InvoiceValue_DAX as a DAX calculated column", "Compare InvoiceValuePQ and InvoiceValue_DAX at row and matrix levels", "Choose between an M column, DAX calculated column and DAX measure for common modelling needs"],
+        "concepts": [
+            ("Power Query M", "M connects to, cleans and shapes data before it enters the semantic model. Its steps run during refresh and can remove unnecessary rows or columns before model storage.", "InvoiceValuePQ is created in Power Query with each [Quantity] * [UnitPrice].", "Use M when the logic belongs to data preparation and should be completed before loading."),
+            ("DAX", "DAX works inside the loaded semantic model. A DAX calculated column evaluates row by row during model refresh and is stored; a DAX measure evaluates at query time under the current filter context and is not stored as one value per row.", "InvoiceValue_DAX = data[Quantity] * data[UnitPrice] creates a stored calculated column.", "Calculated columns and measures both use DAX, but they solve different problems."),
+            ("Why the two columns match", "InvoiceValuePQ and InvoiceValue_DAX use the same row-level inputs and multiplication, so they should produce the same value on every row and the same SUM by Country and InvoiceType.", "Both matrices reconcile to Sales of 10,644,560.42, Sales Returns of -896,812.49 and Total of 9,747,747.93.", "Matching results demonstrate equivalent logic, not identical execution engines."),
+            ("Choosing the right engine", "Power Query M is strongest for repeatable cleaning, combining sources and reducing data before load, but it cannot respond dynamically to report filters. A DAX calculated column can use model relationships and DAX row logic after load, but it consumes model memory and remains fixed until refresh. A DAX measure is memory-efficient and responds to filter context, but it returns a result rather than a reusable row value and requires a sound model and context understanding.", "Parse InvoiceNo and remove bad rows in M; create a model-side classification as a DAX calculated column only when it depends on loaded model logic; calculate dynamic Sales, Sales Returns and Net Sales totals as measures.", "Use M for preparation, calculated columns sparingly for stored attributes, and measures for dynamic analysis."),
+        ],
+        "lab": ("Compare M and DAX invoice values", "Loaded Lab 1 retail table", ["In Data view, select New column", "Enter InvoiceValue_DAX = data[Quantity] * data[UnitPrice]", "Compare InvoiceValue_DAX with InvoiceValuePQ on representative rows", "Create one matrix using Country, InvoiceType and Sum of InvoiceValuePQ", "Duplicate the matrix and replace InvoiceValuePQ with InvoiceValue_DAX", "Compare country values, Sales, Sales Returns and grand totals", "Explain why identical outputs do not mean M and DAX run at the same stage"], "Two reconciled matrices and a documented M-versus-DAX decision rule"),
+        "check": ("Which calculation is evaluated at report query time under filter context?", ["A DAX measure", "A Power Query custom column", "A DAX calculated column", "A CSV delimiter"], 0, "A DAX measure evaluates when a visual queries the model; M and DAX calculated columns are processed during refresh."),
     },
     {
         "id": 5, "code": "D2.1", "day": 2, "duration": "90 min",
@@ -225,23 +255,43 @@ TOOL_LABS = {
         "evidence": "A completed interface checklist covering ribbon, views, canvas, panes and pages",
     },
     3: {
-        "screen_title": "Import data.csv and open Power Query Editor",
+        "screen_title": "Understand the CSV preview, then open Power Query Editor",
         "screens": [
+            ("Text/CSV preview", "02-text-csv-preview.png", "The data.csv preview shown before the file is loaded or opened in Power Query Editor.", ["File Origin controls how characters are decoded", "Comma must split the file into eight expected columns", "Based on first 200 rows is an inferred type sample, not a full quality check", "Load imports immediately using the current settings", "Transform Data opens Power Query Editor before the result is loaded", "Neither choice changes the source CSV"]),
             ("Get data from the Home ribbon", "01-power-bi-desktop-interface.png", "The Home ribbon contains Get data and Transform data. Source: Microsoft Learn.", ["Select Get data", "Choose Text/CSV", "Select data.csv", "Use the preview to verify the file before continuing"]),
             ("Power Query Editor", "03-power-query-editor.png", "The course data open in Power Query Editor with the ribbon, preview, formula bar and Applied Steps visible.", ["The query named data appears on the left", "The centre grid previews the eight source columns", "Applied Steps record each transformation", "The formula bar shows the generated M expression"]),
         ],
-        "click_path": ["Power BI Desktop > Home > Get data > Text/CSV", "Browse to the Lab 1 CSV folder and select data.csv", "Confirm comma delimiter, headers and eight columns", "Select Transform Data", "Verify that the data query opens in Power Query Editor"],
+        "click_path": ["Power BI Desktop > Home > Get data > Text/CSV", "Browse to the Lab 1 CSV folder and select data.csv", "Confirm the file origin, comma delimiter, headers and eight columns", "Recognize that the displayed types are inferred from the first 200 rows", "Select Transform Data", "Verify that the data query opens in Power Query Editor"],
         "task": "Import the original Lab 1 data.csv file and stop in Power Query Editor before loading it.",
         "evidence": "The data query visible in Power Query Editor with all eight source columns",
     },
     4: {
-        "screen_title": "Diagnose the date error, correct the locale and load",
+        "screen_title": "Correct types, validate the query and reconcile before loading",
         "screens": [
-            ("Changed Type with Locale", "03-power-query-editor.png", "The completed Lab 1 query shows InvoiceDate converted with a locale-aware step before the remaining column types are applied.", ["The formula bar contains Table.TransformColumnTypes", "Changed Type with Locale appears in Applied Steps", "InvoiceDate displays as a valid Date/Time value", "Close & Apply loads the cleaned table into Power BI Desktop"]),
+            ("Changed Type with Locale", "03-power-query-editor.png", "The completed cleaning sequence converts InvoiceDate with a locale-aware step before detecting and correcting the remaining column types.", ["Remove the automatic Changed Type step created during import", "Changed Type with Locale must come before the broad Changed Type step", "Detect Data Type supplies the initial types for the remaining columns", "InvoiceNo must be Text; choose Replace Current when correcting it", "Keep Errors is removed after the final validation", "Control totals are checked before Close & Apply"]),
         ],
-        "click_path": ["Select InvoiceDate and convert it to Date/Time to expose the error", "Home > Keep Rows > Keep Errors and inspect values such as 1/13/2011", "Remove the temporary error-only step", "InvoiceDate > Data type > Using Locale > Date/Time > English (United States)", "Assign the remaining column types and keep InvoiceNo as text", "Home > Close & Apply and confirm the table appears in Power BI Desktop"],
-        "task": "Use Keep Errors to diagnose the InvoiceDate problem, correct it with English (United States) locale and load the table.",
-        "evidence": "A loaded data table with valid InvoiceDate values and no unexplained conversion errors",
+        "click_path": ["Select InvoiceDate and convert it to Date/Time to expose the error", "Home > Keep Rows > Keep Errors and inspect values such as 1/13/2011", "Remove Keep Errors and the automatic Changed Type step", "InvoiceDate > Data type > Using Locale > Date/Time > English (United States)", "Transform > Detect Data Type", "Change InvoiceNo to Text and select Replace Current", "Run Keep Errors again, confirm no unexpected errors and remove the step", "Evaluate the InvoiceNo non-null count and Quantity sum", "Home > Close & Apply and confirm the table appears in Power BI Desktop"],
+        "task": "Rebuild the query's type sequence, validate all typed columns with Keep Errors, reconcile the two statistics and load the clean table.",
+        "evidence": "A loaded table with the correct locale and column types, no unexplained errors, and recorded row-count and quantity controls",
+    },
+    13: {
+        "screen_title": "Add calculated and conditional columns in Power Query Editor",
+        "screens": [
+            ("Power Query Editor", "03-power-query-editor.png", "Use Add Column > Custom Column after the cleaning steps have produced correctly typed InvoiceNo, Quantity and UnitPrice columns.", ["InvoiceValuePQ multiplies Quantity by UnitPrice for each row", "Text.StartsWith tests whether InvoiceNo begins with C", "if…then…else returns Sales Returns or Sales", "Set InvoiceValuePQ to Decimal Number and InvoiceType to Text", "Validate both branches before Close & Apply"]),
+        ],
+        "click_path": ["Power Query Editor > Add Column > Custom Column", "Create InvoiceValuePQ with [Quantity] * [UnitPrice] and set it to Decimal Number", "Add a second Custom Column named InvoiceType", "Enter if Text.StartsWith([InvoiceNo], \"C\") then \"Sales Returns\" else \"Sales\"", "Set InvoiceType to Text", "Confirm all four Added Custom and Changed Type steps", "Check representative Sales and Sales Returns rows before Close & Apply"],
+        "task": "Create InvoiceValuePQ and use Text.StartsWith to bifurcate the retail rows into Sales and Sales Returns.",
+        "evidence": "Typed InvoiceValuePQ and InvoiceType columns with correctly classified normal and C-prefixed invoice numbers",
+    },
+    14: {
+        "screen_title": "Compare an M custom column with a DAX calculated column",
+        "screens": [
+            ("DAX calculated column", "04-invoice-value-dax-column.png", "Data view showing InvoiceValue_DAX beside InvoiceValuePQ. Both columns use Quantity multiplied by UnitPrice and display matching row values.", ["The formula bar contains DAX, not M", "InvoiceValue_DAX is created after the table has loaded into the model", "InvoiceValuePQ arrived from Power Query", "Both are stored row-level columns", "Matching row values validate equivalent business logic"]),
+            ("Matrix comparison", "04-m-query-dax-matrix-comparison.png", "Two matrices aggregate the Power Query and DAX columns by Country and InvoiceType. Their sorting differs, but the country values and grand totals reconcile.", ["Rows use Country", "Columns use InvoiceType: Sales and Sales Returns", "One matrix sums InvoiceValuePQ and the other sums InvoiceValue_DAX", "Both grand totals equal 9,747,747.93", "Visual equality does not mean the calculations execute in the same engine"]),
+        ],
+        "click_path": ["Data view > New column", "Enter InvoiceValue_DAX = data[Quantity] * data[UnitPrice]", "Compare InvoiceValuePQ and InvoiceValue_DAX on several Sales and Sales Returns rows", "Report view > add a Matrix visual", "Rows > Country; Columns > InvoiceType; Values > Sum of InvoiceValuePQ", "Duplicate the matrix and replace the value with Sum of InvoiceValue_DAX", "Reconcile country values and grand totals", "State when M, a DAX calculated column or a DAX measure should be used"],
+        "task": "Reproduce both matrices and explain why the results match even though M and DAX execute at different stages.",
+        "evidence": "Matching row calculations, reconciled matrix totals and a correct M-versus-DAX comparison",
     },
     5: {
         "screen_title": "Build and inspect the model",
