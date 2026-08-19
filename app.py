@@ -323,7 +323,7 @@ def home() -> None:
         f"""
         <div class="hero">
           <div>
-            <span class="pill">3 DAYS</span><span class="pill">18 CONTACT HOURS</span><span class="pill">14 MODULES</span>
+            <span class="pill">3 DAYS</span><span class="pill">18 CONTACT HOURS</span><span class="pill">{len(MODULES)} MODULES</span>
             <h1>Power BI for finance, reporting and audit analytics</h1>
             <p>Welcome, {learner}. Move from raw files to a governed, decision-ready Power BI solution through guided concepts, visual laboratories, downloadable practice files and a management capstone.</p>
           </div>
@@ -336,7 +336,7 @@ def home() -> None:
         </div>
         <div class="metric-row">
           <div class="metric-card"><strong>10–4</strong><span>Daily workshop timing</span></div>
-          <div class="metric-card"><strong>12</strong><span>Guided learning modules</span></div>
+          <div class="metric-card"><strong>{len(MODULES)}</strong><span>Guided learning modules</span></div>
           <div class="metric-card"><strong>{len(RESOURCES)}</strong><span>Downloadable lab resources</span></div>
           <div class="metric-card"><strong>70%</strong><span>Assessment pass mark</span></div>
         </div>
@@ -357,16 +357,25 @@ def home() -> None:
 def module_card(module: dict) -> None:
     completed = module["id"] in st.session_state.completed
     status = "✓ Complete" if completed else "Start module"
-    st.markdown(f"**{module['code']} · {module['title']}**  \n{module['subtitle']}  \n`{module['duration']}` · `{status}`")
+    lab_label = ""
+    if module.get("lab_group"):
+        lab_total = sum(item.get("lab_group") == module["lab_group"] for item in MODULES)
+        lab_label = f" · `{module['lab_group']} step {module['lab_step']}/{lab_total}`"
+    st.markdown(f"**{module['code']} · {module['title']}**  \n{module['subtitle']}  \n`{module['duration']}` · `{status}`{lab_label}")
 
 
 def curriculum() -> None:
-    page_header("Guided pathway", "Curriculum", "Fourteen modules combine explanation, practical examples, guided labs and quick knowledge checks.")
+    page_header("Guided pathway", "Curriculum", f"{len(MODULES)} modules combine explanation, practical examples, guided labs and quick knowledge checks.")
     day_filter = st.segmented_control("Day", ["All", "Day 1", "Day 2", "Day 3"], default="All")
     filtered = MODULES if day_filter == "All" else [m for m in MODULES if m["day"] == int(day_filter[-1])]
-    options = {f"{m['code']} · {m['title']}": m for m in filtered}
+    options = {
+        (f"{m['lab_group']} · Step {m['lab_step']} · {m['code']} · {m['title']}" if m.get("lab_group") else f"{m['code']} · {m['title']}"): m
+        for m in filtered
+    }
     for d in sorted({m["day"] for m in filtered}):
         with st.expander(f"Day {d} · {SCHEDULE[d-1]['theme']}", expanded=True):
+            if d == 1:
+                st.caption("Day 1 contains two continuous pathways: Lab 1 has six steps and Lab 2 has four. Complete each lab in order and compare the reference solution only after its final step.")
             for m in [x for x in filtered if x["day"] == d]:
                 module_card(m)
     selected_label = st.selectbox("Open a module", list(options))
@@ -374,8 +383,9 @@ def curriculum() -> None:
 
 
 def show_module(module: dict) -> None:
+    lab_badge = f'<span class="badge">{module["lab_group"]} · Step {module["lab_step"]}</span>' if module.get("lab_group") else ""
     st.markdown(
-        f'<div class="module-head"><span class="badge">{module["code"]}</span><span class="badge">Day {module["day"]}</span><span class="badge">{module["duration"]}</span><h1>{module["title"]}</h1><p>{module["subtitle"]}</p></div>',
+        f'<div class="module-head"><span class="badge">{module["code"]}</span><span class="badge">Day {module["day"]}</span>{lab_badge}<span class="badge">{module["duration"]}</span><h1>{module["title"]}</h1><p>{module["subtitle"]}</p></div>',
         unsafe_allow_html=True,
     )
     left, right = st.columns([1.9, 1])
@@ -527,6 +537,58 @@ def lab1_download_button(key: str) -> None:
             data=package.read_bytes(),
             file_name=package.name,
             mime="application/zip",
+            key=key,
+            width="stretch",
+        )
+
+
+def lab1_solution_download_button(key: str) -> None:
+    solution = DOWNLOAD_DIR / "completed-lab-1.pbix"
+    if solution.exists():
+        st.download_button(
+            "Download the completed Lab 1 solution (.pbix)",
+            data=solution.read_bytes(),
+            file_name="Completed Lab_1.pbix",
+            mime="application/octet-stream",
+            key=key,
+            width="stretch",
+        )
+
+
+def lab2_solution_download_button(key: str) -> None:
+    solution = DOWNLOAD_DIR / "completed-lab-2.pbix"
+    if solution.exists():
+        st.download_button(
+            "Download the completed Lab 2 solution (.pbix)",
+            data=solution.read_bytes(),
+            file_name="Completed Lab_2.pbix",
+            mime="application/octet-stream",
+            key=key,
+            width="stretch",
+        )
+
+
+def lab3_pdf_download_button(key: str) -> None:
+    source_pdf = DOWNLOAD_DIR / "lab-3-shukran.pdf"
+    if source_pdf.exists():
+        st.download_button(
+            "Download the original Lab 3 receipt (.pdf)",
+            data=source_pdf.read_bytes(),
+            file_name="Shukran.pdf",
+            mime="application/pdf",
+            key=key,
+            width="stretch",
+        )
+
+
+def lab3_solution_download_button(key: str) -> None:
+    solution = DOWNLOAD_DIR / "completed-lab-3.pbix"
+    if solution.exists():
+        st.download_button(
+            "Download the completed Lab 3 solution (.pbix)",
+            data=solution.read_bytes(),
+            file_name="Completed Lab_3.pbix",
+            mime="application/octet-stream",
             key=key,
             width="stretch",
         )
@@ -1006,7 +1068,426 @@ def detailed_m_vs_dax_lab() -> None:
         st.success("Correct. A measure evaluates at query time under the matrix's filter context.")
     elif engine_choice != "Choose an answer":
         st.warning("M columns and DAX calculated columns are processed during refresh. Use a DAX measure for dynamic report-time aggregation.")
-    lab1_download_button("lab1_m_vs_dax_download")
+    st.markdown("#### Lab 1 complete")
+    st.success("You have completed the full Lab 1 pathway: installation, interface orientation, CSV import, error diagnosis, locale-aware cleaning, validation statistics, custom M columns, Sales Returns classification and the M-versus-DAX comparison.")
+    st.caption("Attempt the full workflow independently before opening the completed solution. Use the PBIX to compare steps, formulas, column types and matrix totals—not as a substitute for rebuilding the lab.")
+    practice_column, solution_column = st.columns(2)
+    with practice_column:
+        lab1_download_button("lab1_m_vs_dax_download")
+    with solution_column:
+        lab1_solution_download_button("lab1_completed_solution_download")
+
+
+def lab2_rate_sample(selected_date: date) -> pd.DataFrame:
+    """Deterministic teaching sample that changes with the selected historical date."""
+    day_offset = (selected_date - date(2026, 8, 19)).days
+    factor = 1 + day_offset * 0.0007
+    direct_rates = [
+        ("Euro", 0.8580),
+        ("British Pound", 0.7320),
+        ("Indian Rupee", 95.7400),
+        ("Australian Dollar", 1.4100),
+        ("Canadian Dollar", 1.3900),
+        ("Japanese Yen", 159.0500),
+    ]
+    rows = []
+    for currency, base_rate in direct_rates:
+        direct = base_rate * factor
+        rows.append([currency, direct, 1 / direct])
+    return pd.DataFrame(rows, columns=["US Dollar", "1.00 USD", "inv. 1.00 USD"])
+
+
+def detailed_lab2_web_connection() -> None:
+    lab_banner("Lab 2 · Connect to historical web rates", "Read the X-Rates address as a set of inputs, then connect Power BI to one fixed historical USD page before making the date dynamic.")
+    selected_date = st.date_input("Historical date in the fixed URL", value=date(2026, 8, 19), key="lab2_fixed_date")
+    date_text = selected_date.strftime("%Y-%m-%d")
+    url = f"https://www.x-rates.com/historical/?from=USD&amount=1&date={date_text}"
+    process_strip(
+        [
+            ("Domain", "x-rates.com", "active"),
+            ("Base", "from=USD", "active"),
+            ("Amount", "amount=1", "active"),
+            ("Date", date_text, "active"),
+            ("Transform Data", "Inspect before load", ""),
+        ]
+    )
+    st.markdown("#### Read the query string")
+    url_parts = pd.DataFrame(
+        [
+            ["from", "USD", "Base currency"],
+            ["amount", "1", "One unit of the base currency"],
+            ["date", date_text, "Historical date; this becomes the Lab 2 parameter"],
+        ],
+        columns=["URL input", "Current value", "Meaning"],
+    )
+    st.dataframe(url_parts, hide_index=True, width="stretch")
+    st.code(url, language=None)
+    st.link_button("Open this historical X-Rates page", url, width="stretch")
+    st.markdown("#### Initial fixed-date Source step")
+    st.code(f'Source = Web.BrowserContents("{url}")', language="powerquery")
+    st.info("This first step deliberately uses a fixed date. Confirm the correct page and table before introducing a parameter in Step 3.")
+    st.dataframe(lab2_rate_sample(selected_date).style.format({"1.00 USD": "{:,.6f}", "inv. 1.00 USD": "{:,.6f}"}), hide_index=True, width="stretch")
+    st.caption("The table above is a deterministic classroom preview. Power BI retrieves the live page when the learner runs the web query.")
+
+
+def detailed_lab2_html_extraction() -> None:
+    lab_banner("Lab 2 · Extract the HTML rates table", "Convert the rendered webpage into three columns with Html.Table, then promote headers and assign explicit data types.")
+    process_strip(
+        [
+            ("Source", "Rendered webpage", "active"),
+            ("Html.Table", "3 CSS selectors", "active"),
+            ("Promoted Headers", "Use first extracted row", "active"),
+            ("Changed Type", "Text + two numbers", "active"),
+        ]
+    )
+    selectors = pd.DataFrame(
+        [
+            ["Column1", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(1)", "Currency name"],
+            ["Column2", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(2)", "Direct rate for 1 USD"],
+            ["Column3", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(3)", "Inverse rate"],
+        ],
+        columns=["Temporary column", "CSS selector", "Expected value"],
+    )
+    st.markdown("#### Selector map")
+    st.dataframe(selectors, hide_index=True, width="stretch")
+    st.markdown("#### M query before parameterization")
+    st.code(
+        '''let
+    Source = Web.BrowserContents("https://www.x-rates.com/historical/?from=USD&amount=1&date=2026-08-19"),
+    #"Extracted Table From Html" = Html.Table(Source, {{"Column1", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(1)"}, {"Column2", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(2)"}, {"Column3", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(3)"}}, [RowSelector="TABLE.tablesorter.ratesTable > * > TR"]),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Extracted Table From Html", [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers", {{"US Dollar▲", type text}, {"1.00 USD▲▼", type number}, {"inv. 1.00 USD▲▼", type number}})
+in
+    #"Changed Type"''',
+        language="powerquery",
+    )
+    st.warning("The selectors and header names depend on the website's current HTML. If X-Rates changes its table class, cell order or sort symbols, inspect the extraction and type steps rather than blindly replacing errors.")
+    st.dataframe(lab2_rate_sample(date(2026, 8, 19)).style.format({"1.00 USD": "{:,.6f}", "inv. 1.00 USD": "{:,.6f}"}), hide_index=True, width="stretch")
+
+
+def detailed_lab2_date_parameter() -> None:
+    lab_banner("Lab 2 · Parameterize the historical date", "Create one Date input and concatenate it into the Source URL so the same transformation steps can retrieve another historical page.")
+    parameter_type = st.radio("Parameter data type", ["Text · YYYY-MM-DD", "Date · convert with Date.ToText"], horizontal=True, key="lab2_parameter_type")
+    selected_date = st.date_input("Date parameter current value", value=date(2026, 8, 19), key="lab2_parameter_date")
+    date_text = selected_date.strftime("%Y-%m-%d")
+    if parameter_type.startswith("Text"):
+        source_expression = 'Source = Web.BrowserContents("https://www.x-rates.com/historical/?from=USD&amount=1&date=" & Date)'
+        parameter_note = f'Date is a Text parameter whose current value is "{date_text}".'
+    else:
+        source_expression = 'Source = Web.BrowserContents("https://www.x-rates.com/historical/?from=USD&amount=1&date=" & Date.ToText(Date, "yyyy-MM-dd"))'
+        parameter_note = f"Date is a true Date parameter currently set to {date_text}; Date.ToText converts it for the URL."
+    process_strip(
+        [
+            ("Manage Parameters", "Create Date", "active"),
+            ("Current Value", date_text, "active"),
+            ("Source URL", "Concatenate parameter", "active"),
+            ("Refresh Preview", "Request new page", ""),
+        ]
+    )
+    st.info(parameter_note)
+    st.code(source_expression, language="powerquery")
+    st.markdown("#### Complete parameter-driven query")
+    parameter_value = "Date" if parameter_type.startswith("Text") else 'Date.ToText(Date, "yyyy-MM-dd")'
+    st.code(
+        f'''let
+    Source = Web.BrowserContents("https://www.x-rates.com/historical/?from=USD&amount=1&date=" & {parameter_value}),
+    #"Extracted Table From Html" = Html.Table(Source, {{{{"Column1", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(1)"}}, {{"Column2", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(2)"}}, {{"Column3", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(3)"}}}}, [RowSelector="TABLE.tablesorter.ratesTable > * > TR"]),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Extracted Table From Html", [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers", {{{{"US Dollar▲", type text}}, {{"1.00 USD▲▼", type number}}, {{"inv. 1.00 USD▲▼", type number}}}})
+in
+    #"Changed Type"''',
+        language="powerquery",
+    )
+    st.caption("Changing the parameter updates the stored input. Refresh Preview in Power Query—or refresh the model after Close & Apply—to retrieve data for the new date.")
+
+
+def detailed_lab2_refresh_report() -> None:
+    lab_banner("Lab 2 · Refresh and validate", "Edit the Date parameter, refresh the web query and verify that the table represents the intended historical date before completing the lab.")
+    selected_date = st.date_input("Edit Parameters · Date", value=date(2026, 8, 19), key="lab2_report_date")
+    refreshed = st.toggle("I selected OK and refreshed the query", key="lab2_report_refreshed")
+    rates = lab2_rate_sample(selected_date)
+    rates["Reciprocal check"] = rates["1.00 USD"] * rates["inv. 1.00 USD"]
+    metrics = st.columns(3)
+    metrics[0].metric("Requested date", selected_date.strftime("%Y-%m-%d"))
+    metrics[1].metric("Currencies in sample", len(rates))
+    metrics[2].metric("Reciprocal exceptions", int((rates["Reciprocal check"].sub(1).abs() > 0.000001).sum()))
+    st.dataframe(
+        rates.style.format({"1.00 USD": "{:,.6f}", "inv. 1.00 USD": "{:,.6f}", "Reciprocal check": "{:.6f}"}),
+        hide_index=True,
+        width="stretch",
+    )
+    if refreshed:
+        st.success("Refresh recorded. Confirm the requested date on the source page and compare representative currencies before relying on the report.")
+    else:
+        st.warning("Changing the parameter alone does not retrieve new data. Select OK and refresh the query or model.")
+    st.error("Do not interpret a grand total of all exchange rates. Each row has a different currency unit and scale, so the rates are not meaningfully additive. Prefer a Table visual or disable Matrix totals.")
+    st.markdown("#### Lab 2 complete")
+    st.success("You have completed the Lab 2 pathway: connect to the webpage, extract the HTML table, create a dynamic Date parameter, refresh and validate the historical rates report.")
+    st.caption("Rebuild the four steps independently before comparing your query, parameter and visual with the completed PBIX.")
+    lab2_solution_download_button("lab2_completed_solution_download")
+
+
+def lab3_final_lines() -> pd.DataFrame:
+    """The 17 item-level rows produced by the supplied completed Lab 3 query."""
+    rows = [
+        ("6292472422525", "CT-ASOS 30 Double Zip Resealable Lock Bag", 1, 14.99, 14.99),
+        ("6292472422518", "CT-ASOS 50 Double Zip Resealable Lock Bag", 1, 11.99, 11.99),
+        ("6292476294661", "BP Essence Fitted Sheet 200 X205X33 cm -Grey", 1, 78.99, 78.99),
+        ("6292471817469", "BP Welsoft Bathmat-45x70cm-Grey", 1, 18.99, 18.99),
+        ("6292471817469", "BP Welsoft Bathmat-45x70cm-Grey", 1, 18.99, 18.99),
+        ("6292478813044", "Classic microcotton Hand Towel 40 x70cm 500 gsm White", 1, 19.00, 14.25),
+        ("6292478813044", "Classic microcotton Hand Towel 40 x70cm 500 gsm White", 1, 19.00, 14.25),
+        ("6292478813044", "Classic microcotton Hand Towel 40 x70cm 500 gsm White", 1, 19.00, 14.25),
+        ("6292478813044", "Classic microcotton Hand Towel 40 x70cm 500 gsm White", 1, 19.00, 14.25),
+        ("6292471817476", "BP Welsoft Bathmat-45x70cm-Ecru", 1, 18.99, 18.99),
+        ("6292471817476", "BP Welsoft Bathmat-45x70cm-Ecru", 1, 18.99, 18.99),
+        ("8906062676110", "BP-Round Waste Bin with Flap 24x29.3cm White", 1, 9.99, 9.99),
+        ("8906062676110", "BP-Round Waste Bin with Flap 24x29.3cm White", 1, 9.99, 9.99),
+        ("6292483598592", "Serenity Printed Pillow Case - 50 x75 - Grey", 1, 39.00, 29.25),
+        ("6292482629839", "Eternity Luxe 325TC Printed Pillow Case 50 x75cm S/2 - Grey", 1, 55.00, 41.25),
+        ("6292483598547", "Serenity Printed Fitted Sheet - 200 x205 - Grey", 1, 109.00, 81.75),
+        ("6292474837839", "BP-Zeal Water Bottle 1000ml Grey", 4, 3.99, 15.96),
+    ]
+    table = pd.DataFrame(rows, columns=["Item Code", "Item Description", "Quantity", "Rate", "Value"])
+    table["TRN"] = "TRN : 100260641400003"
+    table["Date"] = pd.Timestamp("2023-09-23")
+    return table[["Item Code", "Quantity", "Rate", "Value", "TRN", "Date", "Item Description"]]
+
+
+def detailed_lab3_pdf_import() -> None:
+    lab_banner("Lab 3 · Import a multi-page PDF", "Inspect the three detected table objects in Shukran.pdf and select only the two pages that belong to the invoice-line dataset.")
+    process_strip(
+        [
+            ("Get data", "PDF", "active"),
+            ("Navigator", "3 detected tables", "active"),
+            ("Select", "Table001 + Table002", "active"),
+            ("Transform Data", "Open two queries", ""),
+        ]
+    )
+    table_map = pd.DataFrame(
+        [
+            ["Table001", "Page 1", "Receipt header and first item lines", "Select"],
+            ["Table002", "Page 2", "Remaining item lines and receipt totals", "Select"],
+            ["Table003", "Page 3", "Loyalty details, terms and store information", "Exclude"],
+        ],
+        columns=["Detected table", "PDF page", "Observed content", "Lab decision"],
+    )
+    st.dataframe(table_map, hide_index=True, width="stretch")
+    selected = st.multiselect(
+        "Navigator tables to import",
+        table_map["Detected table"].tolist(),
+        default=["Table001", "Table002"],
+        key="lab3_pdf_tables",
+    )
+    if set(selected) == {"Table001", "Table002"}:
+        st.success("Correct selection: the two invoice pages will become Power Query queries; the unrelated third table stays out of the transaction dataset.")
+    elif "Table003" in selected:
+        st.warning("Table003 contains loyalty and terms content at a different business grain. Leave it unselected for this invoice-line model.")
+    else:
+        st.warning("Both Table001 and Table002 are required because the purchased items continue onto Page 2.")
+    st.code(
+        '''Source = Pdf.Tables(
+    File.Contents("C:\\Users\\user\\Desktop\\ICAI Training\\Lab 1 - Power BI Importing Data Basics\\Data\\PDF\\Shukran.pdf"),
+    [Implementation="1.3"]
+)''',
+        language="powerquery",
+    )
+    st.info("A detected PDF table is a layout interpretation. Compare the Navigator preview with the rendered pages before trusting the extraction.")
+    lab3_pdf_download_button("lab3_source_pdf_step1")
+
+
+def detailed_lab3_page2_cleanup() -> None:
+    lab_banner("Lab 3 · Clean the Page 2 staging query", "Standardize Table002 before append, remove receipt-summary rows and keep it as an upstream query with Enable load disabled.")
+    process_strip(
+        [
+            ("Table002", "6 extracted columns", "active"),
+            ("Remove columns", "Column2 + Column3", "active"),
+            ("Filter rows", "Remove receipt totals", "active"),
+            ("Rename", "Item · Quantity · Rate · Value", "active"),
+            ("Disable load", "Staging only", ""),
+        ]
+    )
+    raw_rows = pd.DataFrame(
+        [
+            ["6292478813044", None, None, 1, 19.00, 14.25],
+            ["Classic microcotton Hand Towel 40 x70cm 500 gsm White", None, None, None, None, None],
+            ["6292474837839", None, None, 4, 3.99, 15.96],
+            ["BP-Zeal Water Bottle 1000ml Grey", None, None, None, None, None],
+            ["Total Quantity : 20.00", None, None, None, None, None],
+            ["Total :", None, None, None, None, 427.12],
+            ["Credit Voucher", None, None, None, None, 127.30],
+            ["Change Due :", None, None, None, None, 0.00],
+        ],
+        columns=["Column1", "Column2", "Column3", "Column4", "Column5", "Column6"],
+    )
+    apply_cleanup = st.toggle("Apply the Page 2 cleanup steps", value=True, key="lab3_page2_cleanup")
+    if apply_cleanup:
+        excluded = {"Change Due :", "Credit", "Credit Voucher", "Tot Disc", "Total :", "Total Quantity : 20.00", "Total Tender"}
+        preview = raw_rows.drop(columns=["Column2", "Column3"])
+        preview = preview[~preview["Column1"].isin(excluded)].rename(columns={"Column1": "Item", "Column4": "Quantity", "Column5": "Rate", "Column6": "Value"})
+        st.dataframe(preview, hide_index=True, width="stretch")
+        st.success("The staging preview now has the four fields required by the append.")
+    else:
+        st.dataframe(raw_rows, hide_index=True, width="stretch")
+        st.warning("The raw six-column extraction still contains structural columns and non-product receipt totals.")
+    st.code(
+        '''let
+    Source = Pdf.Tables(File.Contents("C:\\Users\\user\\Desktop\\ICAI Training\\Lab 1 - Power BI Importing Data Basics\\Data\\PDF\\Shukran.pdf"), [Implementation="1.3"]),
+    Table002 = Source{[Id="Table002"]}[Data],
+    #"Changed Type" = Table.TransformColumnTypes(Table002,{{"Column1", type text}, {"Column2", type number}, {"Column3", type number}, {"Column4", Int64.Type}, {"Column5", type number}, {"Column6", type number}}),
+    #"Removed Columns" = Table.RemoveColumns(#"Changed Type",{"Column2", "Column3"}),
+    #"Filtered Rows" = Table.SelectRows(#"Removed Columns", each ([Column1] <> "Change Due :" and [Column1] <> "Credit" and [Column1] <> "Credit Voucher" and [Column1] <> "Tot Disc" and [Column1] <> "Total :" and [Column1] <> "Total Quantity : 20.00" and [Column1] <> "Total Tender")),
+    #"Renamed Columns" = Table.RenameColumns(#"Filtered Rows",{{"Column1", "Item"}, {"Column4", "Quantity"}, {"Column5", "Rate"}, {"Column6", "Value"}})
+in
+    #"Renamed Columns"''',
+        language="powerquery",
+    )
+    load_disabled = st.checkbox("I disabled Enable load for Table002 after creating the append", key="lab3_staging_load_disabled")
+    if load_disabled:
+        st.success("Correct. Table002 will refresh as a dependency but will not create a duplicate model table.")
+    else:
+        st.info("After Table001 references Table002, right-click Table002 and clear Enable load.")
+
+
+def detailed_lab3_append_pages() -> None:
+    lab_banner("Lab 3 · Append Page 2 into Page 1", "Use matching field names and Table.Combine to form one continuous four-column receipt query.")
+    process_strip(
+        [
+            ("Table001", "Page 1 · 4 fields", "active"),
+            ("Table002", "Page 2 · 4 fields", "active"),
+            ("Table.Combine", "Append rows", "active"),
+            ("Table001", "40 mixed rows", ""),
+        ]
+    )
+    schema = pd.DataFrame(
+        [
+            ["Table001 (Page 1)", "Item", "Quantity", "Rate", "Value", "Load enabled"],
+            ["Table002 (Page 2)", "Item", "Quantity", "Rate", "Value", "Load disabled"],
+        ],
+        columns=["Query", "Column 1", "Column 2", "Column 3", "Column 4", "Model state"],
+    )
+    st.dataframe(schema, hide_index=True, width="stretch")
+    st.code('#"Appended Query" = Table.Combine({#"Renamed Columns", #"Table002 (Page 2)"})', language="powerquery")
+    mixed_preview = pd.DataFrame(
+        [
+            ["Page 1", "2023-09-23GMT18:23:41+04.30", None, None, None],
+            ["Page 1", "TRN : 100260641400003", None, None, None],
+            ["Page 1", "6292472422525", 1, 14.99, 14.99],
+            ["Page 1", "CT-ASOS 30 Double Zip Resealable Lock Bag", None, None, None],
+            ["Page 2", "6292478813044", 1, 19.00, 14.25],
+            ["Page 2", "Classic microcotton Hand Towel 40 x70cm 500 gsm White", None, None, None],
+        ],
+        columns=["Source page", "Item", "Quantity", "Rate", "Value"],
+    )
+    st.dataframe(mixed_preview, hide_index=True, width="stretch")
+    st.info("Append is not the end of the transformation: the combined table still contains receipt headers and alternating code/description rows.")
+    if st.toggle("Load Table002 as a second model table", key="lab3_duplicate_staging"):
+        st.error("This would duplicate the Page 2 rows in the semantic model. Keep Table002 as a disabled-load staging query.")
+    else:
+        st.success("Recommended model state: only the completed Table001 query is loaded.")
+
+
+def detailed_lab3_extract_fields() -> None:
+    lab_banner("Lab 3 · Extract receipt headers and pair item rows", "Propagate TRN and Date downward, then move each description upward to its preceding 13-character item code.")
+    process_strip(
+        [
+            ("TRN", "Text.StartsWith + Fill Down", "active"),
+            ("Date", "Text.Contains + Fill Down", "active"),
+            ("Date text", "Before GMT", "active"),
+            ("Item length", "13 = item code", "active"),
+            ("Description", "Fill Up", "active"),
+            ("Quantity", "Keep non-null rows", ""),
+        ]
+    )
+    rules = pd.DataFrame(
+        [
+            ["TRN", 'if Text.StartsWith([Item], "TRN") then [Item] else null', "Fill Down"],
+            ["Date source", 'if Text.Contains([Item], "GMT") then [Item] else null', "Fill Down"],
+            ["Date", 'Text.BeforeDelimiter(_, "GMT")', "Change to Date"],
+            ["Item Description", "if Text.Length([Item]) = 13 then null else [Item]", "Fill Up"],
+        ],
+        columns=["Output", "M expression", "Next operation"],
+    )
+    st.dataframe(rules, hide_index=True, width="stretch")
+    st.markdown("#### Result after propagation and row pairing")
+    st.dataframe(
+        lab3_final_lines().head(7).style.format({"Rate": "{:,.2f}", "Value": "{:,.2f}"}),
+        hide_index=True,
+        width="stretch",
+    )
+    with st.expander("Complete Table001 M query", expanded=True):
+        st.code(
+            '''let
+    Source = Pdf.Tables(File.Contents("C:\\Users\\user\\Desktop\\ICAI Training\\Lab 1 - Power BI Importing Data Basics\\Data\\PDF\\Shukran.pdf"), [Implementation="1.3"]),
+    Table001 = Source{[Id="Table001"]}[Data],
+    #"Changed Type" = Table.TransformColumnTypes(Table001,{{"Column1", type text}, {"Column2", type text}, {"Column3", type text}, {"Column4", type text}}),
+    #"Renamed Columns" = Table.RenameColumns(#"Changed Type",{{"Column1", "Item"}, {"Column2", "Quantity"}, {"Column3", "Rate"}, {"Column4", "Value"}}),
+    #"Appended Query" = Table.Combine({#"Renamed Columns", #"Table002 (Page 2)"}),
+    #"Added Custom" = Table.AddColumn(#"Appended Query", "TRN", each if [Item] is null then null else if Text.StartsWith([Item],"TRN") then [Item] else null),
+    #"Filled Down" = Table.FillDown(#"Added Custom",{"TRN"}),
+    #"Added Custom1" = Table.AddColumn(#"Filled Down", "Custom", each if [Item] is null then null else if Text.Contains([Item],"GMT") then [Item] else null),
+    #"Filled Down1" = Table.FillDown(#"Added Custom1",{"Custom"}),
+    #"Extracted Text Before Delimiter" = Table.TransformColumns(#"Filled Down1", {{"Custom", each Text.BeforeDelimiter(_, "GMT"), type text}}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Extracted Text Before Delimiter",{{"Custom", type date}}),
+    #"Renamed Columns1" = Table.RenameColumns(#"Changed Type1",{{"Custom", "Date"}}),
+    #"Inserted Text Length" = Table.AddColumn(#"Renamed Columns1", "Length", each Text.Length([Item]), Int64.Type),
+    #"Added Custom2" = Table.AddColumn(#"Inserted Text Length", "Item Code", each if [Item] is null then null else if Text.Length([Item])=13 then null else [Item]),
+    #"Filled Up" = Table.FillUp(#"Added Custom2",{"Item Code"}),
+    #"Filtered Rows" = Table.SelectRows(#"Filled Up", each ([Quantity] <> null)),
+    #"Removed Top Rows" = Table.Skip(#"Filtered Rows",4),
+    #"Changed Type2" = Table.TransformColumnTypes(#"Removed Top Rows",{{"Quantity", Int64.Type}, {"Rate", type number}, {"Value", type number}, {"TRN", type text}}),
+    #"Removed Columns" = Table.RemoveColumns(#"Changed Type2",{"Length"}),
+    #"Changed Type3" = Table.TransformColumnTypes(#"Removed Columns",{{"Item Code", type text}}),
+    #"Renamed Columns2" = Table.RenameColumns(#"Changed Type3",{{"Item Code", "Item Description"}, {"Item", "Item Code"}})
+in
+    #"Renamed Columns2"''',
+            language="powerquery",
+        )
+    fill_choice = st.radio("Which direction pairs a description with the item code above it?", ["Fill Up", "Fill Down"], horizontal=True, key="lab3_item_fill_direction")
+    if fill_choice == "Fill Up":
+        st.success("Correct. The description sits below the code, so Fill Up copies it to the preceding code row.")
+    else:
+        st.warning("Fill Down would move a description to the next item. Use Fill Up because the matching code is directly above it.")
+
+
+def detailed_lab3_finalize_report() -> None:
+    lab_banner("Lab 3 · Finalize and reconcile", "Keep the 17 transaction rows, load only Table001 and validate the item summary against the source receipt.")
+    lines = lab3_final_lines()
+    report = (
+        lines.groupby(["Item Code", "Item Description"], as_index=False)
+        .agg({"Quantity": "sum", "Rate": "sum", "Value": "sum"})
+        .sort_values("Item Code")
+    )
+    metrics = st.columns(4)
+    metrics[0].metric("Detail rows", f"{len(lines)}")
+    metrics[1].metric("Displayed items", f"{len(report)}")
+    metrics[2].metric("Total quantity", f"{int(lines['Quantity'].sum())}")
+    metrics[3].metric("Total value", f"AED {lines['Value'].sum():,.2f}")
+    st.dataframe(
+        report.style.format({"Quantity": "{:,.0f}", "Rate": "{:,.2f}", "Value": "{:,.2f}"}),
+        hide_index=True,
+        width="stretch",
+    )
+    st.warning(f"The visual's Sum of Rate is {lines['Rate'].sum():,.2f}, but Rate is a unit price. Use Quantity 20 and Value AED 427.12 as the primary receipt controls.")
+    checks = {
+        "17 item-level rows remain": len(lines) == 17,
+        "Quantity reconciles to 20": int(lines["Quantity"].sum()) == 20,
+        "Value reconciles to AED 427.12": abs(lines["Value"].sum() - 427.12) < 0.001,
+        "Table002 load is disabled": st.checkbox("Confirm Table002 load is disabled", key="lab3_final_load_check"),
+    }
+    for label, passed in checks.items():
+        st.write(("✅" if passed else "⬜") + " " + label)
+    if all(checks.values()):
+        st.success("Lab 3 reconciled: the receipt has one loaded 17-row table, total Quantity 20 and total Value AED 427.12.")
+    else:
+        st.info("Complete the remaining control before treating the Lab 3 report as finished.")
+    st.markdown("#### Lab 3 complete")
+    st.caption("Rebuild the five steps independently before comparing the query dependency, M steps and report totals with the completed PBIX.")
+    source_col, solution_col = st.columns(2)
+    with source_col:
+        lab3_pdf_download_button("lab3_source_pdf_complete")
+    with solution_col:
+        lab3_solution_download_button("lab3_completed_solution_download")
 
 
 def append_sample_tables(scenario: str, normalize_headers: bool, inject_duplicate: bool) -> list[tuple[str, str, pd.DataFrame]]:
@@ -1765,6 +2246,15 @@ def detailed_module_lab(lab_id: int) -> None:
         4: detailed_locale_lab,
         13: detailed_custom_column_lab,
         14: detailed_m_vs_dax_lab,
+        15: detailed_lab2_web_connection,
+        16: detailed_lab2_html_extraction,
+        17: detailed_lab2_date_parameter,
+        18: detailed_lab2_refresh_report,
+        19: detailed_lab3_pdf_import,
+        20: detailed_lab3_page2_cleanup,
+        21: detailed_lab3_append_pages,
+        22: detailed_lab3_extract_fields,
+        23: detailed_lab3_finalize_report,
         5: detailed_model_lab,
         6: detailed_dax_lab,
         7: detailed_visual_lab,
@@ -1779,18 +2269,33 @@ def detailed_module_lab(lab_id: int) -> None:
 
 def interactive_lab() -> None:
     page_header("See it, then build it", "Power BI guided lab", "Choose a topic to study the relevant Power BI screen, follow the exact click path and reproduce the technique in the supplied practice file.")
-    labels = {f"{m['code']} · {m['title']}": m for m in MODULES}
+    labels = {
+        (f"{m['lab_group']} · Step {m['lab_step']} · {m['code']} · {m['title']}" if m.get("lab_group") else f"{m['code']} · {m['title']}"): m
+        for m in MODULES
+    }
     topic_labels = list(labels)
     if st.session_state.get("interactive_lab_topic") not in labels:
         st.session_state["interactive_lab_topic"] = topic_labels[0]
+
+    def select_interactive_topic() -> None:
+        st.session_state["interactive_lab_topic"] = st.session_state["interactive_lab_jump"]
+
+    if st.session_state.get("interactive_lab_jump") != st.session_state["interactive_lab_topic"]:
+        st.session_state["interactive_lab_jump"] = st.session_state["interactive_lab_topic"]
     st.selectbox(
         "Jump to another topic",
         topic_labels,
-        key="interactive_lab_topic",
+        key="interactive_lab_jump",
+        on_change=select_interactive_topic,
         help="Choose any course topic directly. Your last selection remains active when the page refreshes.",
     )
     current_topic = st.session_state["interactive_lab_topic"]
     selected = labels[current_topic]
+    if selected.get("lab_group"):
+        lab_total = sum(item.get("lab_group") == selected["lab_group"] for item in MODULES)
+        st.progress(selected["lab_step"] / lab_total, text=f'{selected["lab_group"]} · Step {selected["lab_step"]} of {lab_total}')
+        if selected["lab_step"] == lab_total:
+            st.caption(f'Final {selected["lab_group"]} topic · complete the validation and download the reference solution below.')
     st.markdown(f"### {selected['title']}")
     lab_id = selected["id"]
     guide = TOOL_LABS[lab_id]
@@ -1856,6 +2361,30 @@ def interactive_lab() -> None:
             st.success("Correct. The business logic and aggregation match, although M and DAX execute at different stages.")
         elif dax_answer:
             st.warning("Equivalent results come from equivalent row values and filter/aggregation choices—not from M and DAX being the same engine.")
+    elif lab_id == 15:
+        web_answer = st.radio("Which URL value becomes the Lab 2 parameter?", ["date", "from", "amount", "https"], index=None, key="lab2_web_control_answer")
+        if web_answer == "date":
+            st.success("Correct. The base page remains stable while the historical date becomes configurable.")
+        elif web_answer:
+            st.warning("Inspect the URL and identify the value that changes for each historical lookup.")
+    elif lab_id == 16:
+        html_answer = st.radio("What does :nth-child(2) select?", ["The second cell in each matched row", "The second date parameter", "Two webpages", "The second refresh"], index=None, key="lab2_html_control_answer")
+        if html_answer == "The second cell in each matched row":
+            st.success("Correct. The selector extracts the direct-rate cell from every row matched by RowSelector.")
+        elif html_answer:
+            st.warning("nth-child addresses a cell position inside each selected HTML row.")
+    elif lab_id == 17:
+        parameter_answer = st.radio("What is required if Date is a Date-typed parameter?", ["Convert it with Date.ToText for the URL", "Turn it into a DAX measure", "Remove the Source step", "Sum the dates"], index=None, key="lab2_parameter_control_answer")
+        if parameter_answer == "Convert it with Date.ToText for the URL":
+            st.success("Correct. The URL is text and requires a date formatted as yyyy-MM-dd.")
+        elif parameter_answer:
+            st.warning("A Date value cannot be safely concatenated into the text URL without formatting it.")
+    elif lab_id == 18:
+        refresh_answer = st.radio("Why should totals across all currency rates be disabled?", ["Rates for different currencies are not meaningfully additive", "Power BI cannot add numbers", "The parameter removes totals", "Web data has no types"], index=None, key="lab2_refresh_control_answer")
+        if refresh_answer == "Rates for different currencies are not meaningfully additive":
+            st.success("Correct. Compare and validate each currency rate; do not interpret their sum as a financial total.")
+        elif refresh_answer:
+            st.warning("The visual can add the values, but currencies with different units and scales do not form a meaningful total.")
     elif lab_id == 5:
         duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension")
         st.write("Relationship: **Product (one) → Sales (many)**" if not duplicate else "Relationship cannot remain one-to-many because the dimension key is no longer unique.")

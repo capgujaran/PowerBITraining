@@ -1,14 +1,14 @@
 """Course content for the three-day Power BI programme."""
 
 SCHEDULE = [
-    {"day": 1, "theme": "Install, explore and import", "focus": "Power BI Desktop installation, CSV cleaning, custom columns and an M-versus-DAX comparison", "modules": "1–6"},
-    {"day": 2, "theme": "Model, calculate and communicate", "focus": "Data modelling, DAX, visual design and report experience", "modules": "7–10"},
-    {"day": 3, "theme": "Automate, audit and publish", "focus": "M language, audit analytics, Power BI Service and capstone", "modules": "11–14"},
+    {"day": 1, "theme": "Labs 1–3 · Prepare, parameterize and combine", "focus": "Clean retail data, parameterize historical web rates and reshape a multi-page PDF receipt", "modules": "1–15"},
+    {"day": 2, "theme": "Model, calculate and communicate", "focus": "Data modelling, DAX, visual design and report experience", "modules": "16–19"},
+    {"day": 3, "theme": "Automate, audit and publish", "focus": "M language, audit analytics, Power BI Service and capstone", "modules": "20–23"},
 ]
 
 MODULES = [
     {
-        "id": 1, "code": "D1.1", "day": 1, "duration": "35 min",
+        "id": 1, "code": "D1.1", "day": 1, "duration": "35 min", "lab_group": "Lab 1", "lab_step": 1,
         "title": "Install Power BI Desktop",
         "subtitle": "Use the Microsoft Store or the supported 64-bit installer",
         "outcomes": ["Choose between the Microsoft Store and direct-download routes", "Identify the supported 64-bit installer", "Launch Power BI Desktop and confirm the installation"],
@@ -21,7 +21,7 @@ MODULES = [
         "check": ("Which file should be selected on the direct-download route?", ["PBIDesktopSetup_x64.exe", "A 32-bit x86 installer", "A third-party repackaged installer", "Power BI Report Builder only"], 0, "The supported standalone Power BI Desktop installer is the 64-bit PBIDesktopSetup_x64.exe file."),
     },
     {
-        "id": 2, "code": "D1.2", "day": 1, "duration": "45 min",
+        "id": 2, "code": "D1.2", "day": 1, "duration": "45 min", "lab_group": "Lab 1", "lab_step": 2,
         "title": "Tour the Power BI Desktop interface",
         "subtitle": "Recognize the views, ribbon, canvas, panes and report pages",
         "outcomes": ["Locate the Home ribbon and common commands", "Switch between Report, Data and Model views", "Identify the report canvas, Filters, Visualizations and Data panes"],
@@ -34,7 +34,7 @@ MODULES = [
         "check": ("Where are report visuals arranged and designed?", ["On the Report view canvas", "Inside the Microsoft Store", "Only in Power Query Editor", "In the Windows download folder"], 0, "The Report view canvas is the main design surface for report visuals."),
     },
     {
-        "id": 3, "code": "D1.3", "day": 1, "duration": "55 min",
+        "id": 3, "code": "D1.3", "day": 1, "duration": "55 min", "lab_group": "Lab 1", "lab_step": 3,
         "title": "Lab 1: Import the retail CSV",
         "subtitle": "Read the Text/CSV preview and choose the correct loading path",
         "outcomes": ["Import a comma-separated file with Text/CSV", "Verify the file origin, delimiter, detected types and eight source columns", "Explain the implications of Load and Transform Data before choosing Transform Data"],
@@ -48,7 +48,7 @@ MODULES = [
         "check": ("Which preview option should be selected for this lab?", ["Transform Data", "Load without inspection", "Cancel", "Publish"], 0, "Transform Data opens Power Query Editor so the date quality issue can be investigated before loading."),
     },
     {
-        "id": 4, "code": "D1.4", "day": 1, "duration": "75 min",
+        "id": 4, "code": "D1.4", "day": 1, "duration": "75 min", "lab_group": "Lab 1", "lab_step": 4,
         "title": "Lab 1: Find and fix the date error",
         "subtitle": "Rebuild the type steps, validate errors and reconcile the clean query",
         "outcomes": ["Remove the unsafe automatic Changed Type step and apply InvoiceDate with the correct locale", "Use Detect Data Type, correct InvoiceNo to Text and replace the current type conversion", "Re-run Keep Errors as a temporary validation and calculate row-count and quantity statistics before loading"],
@@ -62,7 +62,7 @@ MODULES = [
         "check": ("Which locale correctly interprets 1/13/2011 in this source?", ["English (United States)", "A day/month locale", "No locale is needed", "Currency locale only"], 0, "The source uses month/day/year, so English (United States) correctly interprets 1/13/2011 as 13 January 2011."),
     },
     {
-        "id": 13, "code": "D1.5", "day": 1, "duration": "45 min",
+        "id": 13, "code": "D1.5", "day": 1, "duration": "45 min", "lab_group": "Lab 1", "lab_step": 5,
         "title": "Create calculated and conditional Custom Columns",
         "subtitle": "Calculate invoice value and separate Sales from Sales Returns with M",
         "outcomes": ["Create InvoiceValuePQ with a row-level arithmetic expression", "Use Text.StartsWith to classify InvoiceNo values beginning with C as Sales Returns", "Explain each and if…then…else in the generated M expressions", "Assign explicit data types to both new columns and validate the results"],
@@ -76,7 +76,7 @@ MODULES = [
         "check": ("How does the query identify Sales Returns?", ["InvoiceNo starts with C", "Quantity is always positive", "Country is blank", "UnitPrice is zero"], 0, "Text.StartsWith checks the text prefix of InvoiceNo; a leading C classifies the row as Sales Returns."),
     },
     {
-        "id": 14, "code": "D1.6", "day": 1, "duration": "55 min",
+        "id": 14, "code": "D1.6", "day": 1, "duration": "55 min", "lab_group": "Lab 1", "lab_step": 6,
         "title": "Compare Power Query M and DAX",
         "subtitle": "Create the same invoice value in both engines and compare the matrix results",
         "outcomes": ["Explain where and when Power Query M and DAX calculations run", "Create InvoiceValue_DAX as a DAX calculated column", "Compare InvoiceValuePQ and InvoiceValue_DAX at row and matrix levels", "Choose between an M column, DAX calculated column and DAX measure for common modelling needs"],
@@ -88,6 +88,123 @@ MODULES = [
         ],
         "lab": ("Compare M and DAX invoice values", "Loaded Lab 1 retail table", ["In Data view, select New column", "Enter InvoiceValue_DAX = data[Quantity] * data[UnitPrice]", "Compare InvoiceValue_DAX with InvoiceValuePQ on representative rows", "Create one matrix using Country, InvoiceType and Sum of InvoiceValuePQ", "Duplicate the matrix and replace InvoiceValuePQ with InvoiceValue_DAX", "Compare country values, Sales, Sales Returns and grand totals", "Explain why identical outputs do not mean M and DAX run at the same stage"], "Two reconciled matrices and a documented M-versus-DAX decision rule"),
         "check": ("Which calculation is evaluated at report query time under filter context?", ["A DAX measure", "A Power Query custom column", "A DAX calculated column", "A CSV delimiter"], 0, "A DAX measure evaluates when a visual queries the model; M and DAX calculated columns are processed during refresh."),
+    },
+    {
+        "id": 15, "code": "D1.7", "day": 1, "duration": "40 min", "lab_group": "Lab 2", "lab_step": 1,
+        "title": "Connect to historical exchange rates on the web",
+        "subtitle": "Read the X-Rates URL and import the USD historical rates page",
+        "outcomes": ["Identify the base currency, amount and date query-string inputs", "Connect to the historical page with Power BI's Web source", "Explain the difference between a webpage and the table eventually extracted from it"],
+        "concepts": [
+            ("Read the URL", "The page address carries inputs after the question mark. from=USD selects the base currency, amount=1 fixes the base amount and date=YYYY-MM-DD selects the historical date.", "https://www.x-rates.com/historical/?from=USD&amount=1&date=2026-08-18", "Understand which part of a URL is stable and which part should become dynamic."),
+            ("Web.BrowserContents", "Web.BrowserContents returns the rendered webpage content used by the following HTML extraction step. The source depends on network access, site availability and the website's published structure.", "Source = Web.BrowserContents(\"https://www.x-rates.com/historical/?from=USD&amount=1&date=2026-08-18\").", "A web query is an external dependency and must be tested for refresh reliability."),
+            ("Preview before extracting", "Confirm that the selected page shows the expected historical date and the USD rates table before building selectors.", "The screenshot shows the US Dollar historical rates table and a date embedded in the URL.", "Validate the page identity before trusting the data returned from it."),
+        ],
+        "lab": ("Open the historical rates page", "X-Rates historical USD webpage", ["Open the X-Rates historical page in a browser", "Identify from=USD, amount=1 and date=YYYY-MM-DD", "Power BI Desktop > Get data > Web", "Enter the full dated URL", "Choose Transform Data and confirm the expected page content is available"], "A web query connected to the correct historical USD page"),
+        "check": ("Which URL component should become dynamic in this lab?", ["The date value", "The https protocol", "The x-rates.com domain", "The table selector name"], 0, "The Date parameter replaces the historical date value while the source domain and page path remain stable."),
+    },
+    {
+        "id": 16, "code": "D1.8", "day": 1, "duration": "55 min", "lab_group": "Lab 2", "lab_step": 2,
+        "title": "Extract and type the HTML rates table",
+        "subtitle": "Use Html.Table, promote headers and assign stable column types",
+        "outcomes": ["Explain how Html.Table uses a row selector and CSS column selectors", "Promote the first extracted row to headers", "Assign Text and Decimal Number types to the currency and rate columns", "Recognize the refresh risk of website structure changes"],
+        "concepts": [
+            ("Html.Table selectors", "Html.Table converts selected HTML elements into rows and columns. RowSelector finds each table row; the three nth-child selectors return currency, direct rate and inverse rate.", "TABLE.tablesorter.ratesTable > * > TR > :nth-child(1) extracts the first cell from each matched row.", "CSS selectors are instructions tied to the current webpage structure."),
+            ("Promote and type", "Table.PromoteHeaders turns the first extracted row into column names. Table.TransformColumnTypes then makes the currency field Text and the two rate fields numeric.", "US Dollar▲ is Text; 1.00 USD▲▼ and inv. 1.00 USD▲▼ are numbers.", "Types are part of the query contract, not cosmetic formatting."),
+            ("Web extraction risk", "A redesign can change table classes, row structure or header symbols and break selectors or type steps even when the URL still opens.", "If tablesorter.ratesTable or a header changes, inspect the HTML extraction and Applied Steps before replacing errors.", "A successful refresh today does not guarantee an unmanaged webpage will remain stable."),
+        ],
+        "lab": ("Extract the rates table", "Rendered X-Rates HTML", ["Create the Html.Table step with the supplied row and column selectors", "Inspect Column1, Column2 and Column3", "Promote Headers", "Change the currency column to Text", "Change the direct and inverse rate columns to Decimal Number", "Confirm representative rate and inverse-rate values"], "A typed three-column historical exchange-rate query"),
+        "check": ("What does :nth-child(2) extract in this query?", ["The second cell from each selected table row", "The second webpage", "Two historical dates", "The query parameter"], 0, "The selector returns the second cell for every row matched by RowSelector."),
+    },
+    {
+        "id": 17, "code": "D1.9", "day": 1, "duration": "50 min", "lab_group": "Lab 2", "lab_step": 3,
+        "title": "Create a dynamic Date parameter",
+        "subtitle": "Replace the fixed date in the web URL with a Power Query parameter",
+        "outcomes": ["Create and edit a Date parameter", "Concatenate the parameter into Web.BrowserContents", "Explain when Date.ToText is required", "Trace how a parameter change affects the Source step"],
+        "concepts": [
+            ("Parameter purpose", "A parameter stores an input separately from the query. Changing one Date value lets the same transformation steps request another historical page.", "Manage Parameters > New Parameter > Name: Date > Current Value: 2026-08-19.", "Parameters make an input configurable; they do not automatically refresh the query."),
+            ("Dynamic URL", "The fixed URL is split into stable text plus the parameter value. If Date is a Text parameter formatted as YYYY-MM-DD, it can be appended directly.", "Web.BrowserContents(\"https://www.x-rates.com/historical/?from=USD&amount=1&date=\" & Date).", "Keep the parameter format exactly aligned with the website's URL requirement."),
+            ("Typed Date alternative", "If the parameter is created with the Date data type rather than Text, explicitly convert it to the required URL text format.", "... & Date.ToText(Date, \"yyyy-MM-dd\").", "A Date value and a date-formatted text value are different M types."),
+        ],
+        "lab": ("Parameterize the historical date", "Typed X-Rates query", ["Home > Manage Parameters > New Parameter", "Name the parameter Date", "Use Text with a YYYY-MM-DD current value, or Date with Date.ToText", "Replace the fixed date in the Source URL with & Date", "Change the parameter to another valid historical date", "Refresh Preview and confirm that the requested page changes"], "One reusable query controlled by a Date parameter"),
+        "check": ("What must be done when Date is a true Date-typed parameter?", ["Convert it with Date.ToText before URL concatenation", "Change every rate to text", "Remove Html.Table", "Create a DAX measure"], 0, "Web addresses are text, so a Date-typed value must be formatted before concatenation."),
+    },
+    {
+        "id": 18, "code": "D1.10", "day": 1, "duration": "45 min", "lab_group": "Lab 2", "lab_step": 4,
+        "title": "Refresh and validate the parameter-driven report",
+        "subtitle": "Change the date, refresh the query and verify the displayed exchange rates",
+        "outcomes": ["Edit the Date parameter from the report workflow", "Refresh and verify that values change for the requested historical date", "Build a readable currency rate table", "Explain why summing exchange rates across currencies is not a meaningful total"],
+        "concepts": [
+            ("Parameter change and refresh", "Editing the parameter changes the input stored in the model, but the web query must refresh before the table displays the new date's values.", "Set Date to 2026-08-19, select OK and refresh the dataset.", "Parameter edit, refresh and validation are three separate controls."),
+            ("Validate the result", "Check the requested date, row count, representative currencies, numeric types and the reciprocal relationship between direct and inverse rates.", "For a currency row, direct rate multiplied by inverse rate should be approximately 1, allowing for rounding.", "Do not accept a refreshed visual without evidence that it used the intended date."),
+            ("Use a table, not a summed KPI", "Rates for different currencies have different units and scales. Adding them together produces a grand total with no useful financial meaning.", "Display each currency with its direct and inverse rate and disable totals unless a defined aggregation is required.", "A visual can calculate a number that should not be interpreted."),
+        ],
+        "lab": ("Complete the dynamic rates report", "Parameter-driven X-Rates query", ["Add Currency, direct rate and inverse rate to a Table or Matrix", "Open Edit Parameters and enter another YYYY-MM-DD value", "Select OK and refresh", "Confirm the requested date and several currency values", "Check direct rate × inverse rate is approximately 1", "Disable meaningless grand totals across currencies", "Document the external webpage dependency"], "A validated historical-rate report controlled by the Date parameter"),
+        "check": ("Why should the grand total of all currency rates normally be disabled?", ["The rates have different currency units and are not meaningfully additive", "Power BI cannot add decimals", "The parameter deletes totals", "HTML tables never contain numbers"], 0, "Exchange rates across different currencies should be compared row by row, not summed into one total."),
+    },
+    {
+        "id": 19, "code": "D1.11", "day": 1, "duration": "40 min", "lab_group": "Lab 3", "lab_step": 1,
+        "title": "Import the relevant tables from a PDF",
+        "subtitle": "Inspect three detected tables and select the two invoice pages",
+        "outcomes": ["Connect to Shukran.pdf with the PDF connector", "Explain why one PDF can expose several table objects", "Select Table001 and Table002 while excluding the unrelated third table", "Open both selected tables in Power Query Editor"],
+        "concepts": [
+            ("PDF table detection", "Pdf.Tables examines the document layout and returns detected table objects. A detected table is a connector interpretation of positioned text, not a guaranteed business table.", "Pdf.Tables(File.Contents(\"...\\Shukran.pdf\"), [Implementation=\"1.3\"]).", "Always compare detected tables with the rendered PDF pages."),
+            ("Select by business relevance", "The source has three pages and three detected tables. Table001 and Table002 contain the invoice header and line items; the third page contains loyalty and terms content that is outside the required transaction dataset.", "Select Table001 (Page 1) and Table002 (Page 2) in Navigator, then choose Transform Data.", "Import only the structures needed for the defined row grain."),
+            ("Expected grain", "The target table must contain one row per purchased item line, with Item Code, Item Description, Quantity, Rate, Value, TRN and Date.", "The PDF alternates item-code rows and description rows, so additional shaping is required after import.", "Define the target row before cleaning the source."),
+        ],
+        "lab": ("Connect to Shukran.pdf", "Lab 3 · Three-page Shukran receipt", ["Home > Get data > PDF", "Select Shukran.pdf", "Preview all three detected tables", "Select Table001 and Table002 only", "Choose Transform Data", "Confirm that two queries appear in Power Query Editor"], "Two selected PDF staging queries open for transformation"),
+        "check": ("Why is the third detected table excluded?", ["It contains loyalty and terms content rather than invoice line items", "Power BI can import only two PDF tables", "Its rows are already appended", "It contains the Date parameter"], 0, "The third page is not part of the required invoice-line dataset, so loading it would mix a different business grain into the result."),
+    },
+    {
+        "id": 20, "code": "D1.12", "day": 1, "duration": "45 min", "lab_group": "Lab 3", "lab_step": 2,
+        "title": "Clean the Page 2 staging query",
+        "subtitle": "Remove unusable columns and receipt-summary rows before appending",
+        "outcomes": ["Assign stable types to the six extracted Page 2 columns", "Remove the two empty or misaligned columns", "Filter receipt totals and tender rows", "Rename the remaining four fields and disable load for the staging query"],
+        "concepts": [
+            ("Clean before append", "Table002 has six extracted columns while the target invoice structure needs four. Remove Column2 and Column3 before combining so the surviving fields align with Page 1.", "Table.RemoveColumns(#\"Changed Type\", {\"Column2\", \"Column3\"}).", "Standardize the staging schema before appending it."),
+            ("Filter non-detail rows", "PDF extraction includes receipt summaries such as Total, Credit, Total Tender and Change Due. These labels are not product lines and must be excluded from the staging query.", "Table.SelectRows removes the known summary labels from Column1.", "Filtering is a business-rule step; document every excluded label."),
+            ("Staging query and load", "Table002 is required as an input to Table001 but is not an independent model table. Disable Enable load after it is referenced by the append.", "Right-click Table002 (Page 2) > clear Enable load.", "Disabling load prevents a duplicate helper table without breaking the dependency."),
+        ],
+        "lab": ("Prepare Table002 (Page 2)", "Table002 extracted from Shukran.pdf", ["Apply the supplied column types", "Remove Column2 and Column3", "Filter Change Due, Credit, Credit Voucher, Tot Disc, Total, Total Quantity and Total Tender rows", "Rename Column1, Column4, Column5 and Column6 to Item, Quantity, Rate and Value", "Right-click Table002 and disable Enable load"], "A four-column Page 2 staging query available to the append but absent from the model"),
+        "check": ("Why is Enable load disabled for Table002?", ["It is a staging query already consumed by Table001", "It contains no rows", "Append requires every source query to be hidden", "PDF queries cannot load to a model"], 0, "Table002 must still refresh, but loading it separately would duplicate data that is already appended into Table001."),
+    },
+    {
+        "id": 21, "code": "D1.13", "day": 1, "duration": "40 min", "lab_group": "Lab 3", "lab_step": 3,
+        "title": "Append Page 2 into Page 1",
+        "subtitle": "Align the four fields and create one continuous receipt query",
+        "outcomes": ["Rename the Page 1 fields to the same four-column schema", "Append the cleaned Page 2 staging query", "Explain how Table.Combine aligns columns by name", "Verify that the combined query contains header, item-code and description rows from both pages"],
+        "concepts": [
+            ("Schema alignment", "Append stacks rows and matches fields by column name. Page 1 and Page 2 must both expose Item, Quantity, Rate and Value before the operation.", "Rename Column1–Column4 in Table001 and Column1/4/5/6 in Table002 to the same names.", "Mismatched names create additional columns filled with nulls."),
+            ("Append into the primary query", "Table001 is retained as the model-bound query and Table002 is added to it with Table.Combine.", "Table.Combine({#\"Renamed Columns\", #\"Table002 (Page 2)\"}).", "Append preserves rows; it does not match records like a merge."),
+            ("Dependency order", "Power Query evaluates Table002 first because Table001 references it. Enable load controls model storage, not whether the staging query refreshes.", "Table002 refreshes, then Table001 appends its result and continues shaping.", "A disabled-load query can still be an active upstream dependency."),
+        ],
+        "lab": ("Append the two invoice pages", "Aligned Table001 and Table002 queries", ["Rename Page 1 columns to Item, Quantity, Rate and Value", "Home > Append Queries", "Append Table002 (Page 2) to Table001 (Page 1)", "Confirm the generated Table.Combine expression", "Check that the combined preview contains 40 mixed header/detail rows"], "One continuous four-column query containing both invoice pages"),
+        "check": ("What does Table.Combine do in this lab?", ["Stacks Page 2 rows beneath Page 1 using matching column names", "Joins rows by Item Code", "Deletes Table002", "Loads both queries separately"], 0, "Table.Combine performs an append: it stacks the two page tables after their schemas have been aligned."),
+    },
+    {
+        "id": 22, "code": "D1.14", "day": 1, "duration": "70 min", "lab_group": "Lab 3", "lab_step": 4,
+        "title": "Extract receipt headers and pair item rows",
+        "subtitle": "Use conditional columns, Fill Down, Fill Up and text functions",
+        "outcomes": ["Create and fill down the TRN field", "Extract and fill down the receipt Date", "Distinguish 13-character item codes from description rows", "Fill descriptions upward to their matching item-code rows"],
+        "concepts": [
+            ("Carry header values to detail rows", "TRN and the timestamp occur once near the receipt header. Conditional columns retain those values only on matching rows, then Fill Down copies them to the following invoice lines.", "if Text.StartsWith([Item], \"TRN\") then [Item] else null; use Text.Contains([Item], \"GMT\") for the timestamp.", "Fill Down is appropriate when a header applies to the rows beneath it."),
+            ("Convert the timestamp", "After filling the timestamp down, Text.BeforeDelimiter removes GMT and the timezone/time suffix. Converting the result to Date produces 23/09/2023.", "Text.BeforeDelimiter(_, \"GMT\") followed by type date.", "Extract only the stable date portion needed by the model."),
+            ("Pair codes and descriptions", "Item-code rows contain a 13-character value and the next row contains the description. Text.Length identifies the code row; the description is retained in a new column and Fill Up moves it to the preceding code row.", "if Text.Length([Item]) = 13 then null else [Item], then Table.FillUp on Item Code.", "Fill Up is used because the descriptive value sits below the code it describes."),
+        ],
+        "lab": ("Reshape receipt header and detail records", "Appended Table001 query", ["Add TRN with Text.StartsWith and Fill Down", "Add the timestamp field with Text.Contains and Fill Down", "Extract text before GMT, change to Date and rename the column", "Insert Text.Length for Item", "Create Item Code/description logic using the 13-character test", "Fill Up the description column"], "Appended rows enriched with TRN, Date and paired item fields"),
+        "check": ("Why is Fill Up used for Item Description?", ["The description is on the row immediately below its item code", "The TRN appears below every item", "Dates must be sorted descending", "It removes duplicate values"], 0, "The description row follows its code row, so Fill Up copies the description into the preceding item-code row before non-detail rows are filtered out."),
+    },
+    {
+        "id": 23, "code": "D1.15", "day": 1, "duration": "55 min", "lab_group": "Lab 3", "lab_step": 5,
+        "title": "Finalize and validate the PDF report",
+        "subtitle": "Keep transaction rows, assign final types and reconcile the receipt",
+        "outcomes": ["Filter to rows with Quantity and remove the remaining top noise rows", "Assign final numeric, date and text types", "Rename Item and Item Code to the intended business fields", "Validate 17 detail rows, quantity 20 and value AED 427.12 before loading"],
+        "concepts": [
+            ("Keep transaction rows", "After header values and descriptions have been propagated, rows with null Quantity are structural or descriptive rows. Filter Quantity to non-null and skip the four remaining top rows from the first-page header.", "Table.SelectRows(... each [Quantity] <> null) followed by Table.Skip(..., 4).", "Filter only after values have been propagated to the rows that will remain."),
+            ("Finalize names and types", "Quantity becomes Whole Number; Rate and Value become Decimal Number; TRN and item fields remain Text; Date is Date. Remove the temporary Length column and rename the final fields.", "Rename Item Code to Item Description and Item to Item Code.", "Temporary helper columns should not enter the model."),
+            ("Reconcile the output", "The completed query contains 17 line rows. The report groups repeated items into 11 displayed product rows and reconciles to total Quantity 20 and Value AED 427.12.", "Use Quantity and Value as the primary receipt controls. The displayed Sum of Rate 484.90 is not an additive financial total because Rate is a unit price.", "A visually plausible table is not complete until it reconciles to the receipt."),
+        ],
+        "lab": ("Load and validate the completed receipt", "Final Table001 query", ["Filter Quantity to non-null", "Remove the first four remaining header rows", "Set Quantity, Rate, Value, TRN, Date and item types", "Remove Length", "Rename Item Code to Item Description and Item to Item Code", "Confirm Table002 has load disabled", "Close & Apply", "Build the item summary table and reconcile Quantity 20 and Value AED 427.12"], "One loaded 17-row receipt table and a reconciled item summary report"),
+        "check": ("Which controls best validate the completed receipt?", ["Total Quantity 20 and total Value AED 427.12", "Sum of Item Codes and average TRN", "Three loaded model tables", "The number of Applied Steps only"], 0, "Quantity and transaction value reconcile directly to the source receipt; a sum of unit rates is not a meaningful receipt total."),
     },
     {
         "id": 5, "code": "D2.1", "day": 2, "duration": "90 min",
@@ -220,6 +337,10 @@ ASSESSMENT = [
 
 RESOURCES = [
     ("Lab 1 · Original retail CSV", "The complete 541,909-row data.csv file used for importing, error detection and locale correction", "lab-1-importing-data-basics.zip"),
+    ("Lab 1 · Completed solution PBIX", "Completed Lab 1 reference covering setup, CSV preparation, custom columns, Sales Returns classification and the M-versus-DAX comparison", "completed-lab-1.pbix"),
+    ("Lab 2 · Completed solution PBIX", "Completed parameter-driven historical exchange-rates query and report for comparison after finishing all four Lab 2 steps", "completed-lab-2.pbix"),
+    ("Lab 3 · Original Shukran receipt PDF", "The three-page receipt used to detect, append and reshape the two invoice-page tables", "lab-3-shukran.pdf"),
+    ("Lab 3 · Completed solution PBIX", "Completed PDF import with Page 2 staging, append, header/detail extraction, disabled staging load and reconciled report", "completed-lab-3.pbix"),
     ("Day 1 · Data preparation labs", "Queries, cleaning, folder ingestion and combining exercises", "day-1-data-preparation-labs.zip"),
     ("Day 2 · Model and DAX labs", "Model-building, calculations and report-design exercises", "day-2-model-dax-labs.zip"),
     ("Day 3 · Audit analytics labs", "Audit tests, Benford analysis and capstone inputs", "day-3-audit-analytics-labs.zip"),
@@ -268,7 +389,7 @@ TOOL_LABS = {
     4: {
         "screen_title": "Correct types, validate the query and reconcile before loading",
         "screens": [
-            ("Changed Type with Locale", "03-power-query-editor.png", "The completed cleaning sequence converts InvoiceDate with a locale-aware step before detecting and correcting the remaining column types.", ["Remove the automatic Changed Type step created during import", "Changed Type with Locale must come before the broad Changed Type step", "Detect Data Type supplies the initial types for the remaining columns", "InvoiceNo must be Text; choose Replace Current when correcting it", "Keep Errors is removed after the final validation", "Control totals are checked before Close & Apply"]),
+            ("Completed Lab 1 query", "04-lab1-completed-power-query.png", "The completed Lab 1 PBIX shows the locale-aware date conversion and corrected Changed Type step in the final Applied Steps sequence.", ["Changed Type with Locale comes before the broad Changed Type step", "InvoiceNo is stored as Text", "Keep Errors is absent because it was only a temporary validation step", "The completed query also contains the later custom-column steps", "The screenshot was captured directly from Completed Lab_1.pbix"]),
         ],
         "click_path": ["Select InvoiceDate and convert it to Date/Time to expose the error", "Home > Keep Rows > Keep Errors and inspect values such as 1/13/2011", "Remove Keep Errors and the automatic Changed Type step", "InvoiceDate > Data type > Using Locale > Date/Time > English (United States)", "Transform > Detect Data Type", "Change InvoiceNo to Text and select Replace Current", "Run Keep Errors again, confirm no unexpected errors and remove the step", "Evaluate the InvoiceNo non-null count and Quantity sum", "Home > Close & Apply and confirm the table appears in Power BI Desktop"],
         "task": "Rebuild the query's type sequence, validate all typed columns with Keep Errors, reconcile the two statistics and load the clean table.",
@@ -277,7 +398,7 @@ TOOL_LABS = {
     13: {
         "screen_title": "Add calculated and conditional columns in Power Query Editor",
         "screens": [
-            ("Power Query Editor", "03-power-query-editor.png", "Use Add Column > Custom Column after the cleaning steps have produced correctly typed InvoiceNo, Quantity and UnitPrice columns.", ["InvoiceValuePQ multiplies Quantity by UnitPrice for each row", "Text.StartsWith tests whether InvoiceNo begins with C", "if…then…else returns Sales Returns or Sales", "Set InvoiceValuePQ to Decimal Number and InvoiceType to Text", "Validate both branches before Close & Apply"]),
+            ("Completed Lab 1 custom columns", "04-lab1-completed-power-query.png", "The supplied completed PBIX displays InvoiceType and InvoiceValuePQ together with every generated Applied Step.", ["InvoiceValuePQ multiplies Quantity by UnitPrice for each row", "InvoiceType displays Sales for ordinary invoice numbers", "Added Custom and Changed Type steps are visible in the final query", "InvoiceValuePQ is Decimal Number and InvoiceType is Text", "The screenshot was captured directly from Completed Lab_1.pbix"]),
         ],
         "click_path": ["Power Query Editor > Add Column > Custom Column", "Create InvoiceValuePQ with [Quantity] * [UnitPrice] and set it to Decimal Number", "Add a second Custom Column named InvoiceType", "Enter if Text.StartsWith([InvoiceNo], \"C\") then \"Sales Returns\" else \"Sales\"", "Set InvoiceType to Text", "Confirm all four Added Custom and Changed Type steps", "Check representative Sales and Sales Returns rows before Close & Apply"],
         "task": "Create InvoiceValuePQ and use Text.StartsWith to bifurcate the retail rows into Sales and Sales Returns.",
@@ -292,6 +413,76 @@ TOOL_LABS = {
         "click_path": ["Data view > New column", "Enter InvoiceValue_DAX = data[Quantity] * data[UnitPrice]", "Compare InvoiceValuePQ and InvoiceValue_DAX on several Sales and Sales Returns rows", "Report view > add a Matrix visual", "Rows > Country; Columns > InvoiceType; Values > Sum of InvoiceValuePQ", "Duplicate the matrix and replace the value with Sum of InvoiceValue_DAX", "Reconcile country values and grand totals", "State when M, a DAX calculated column or a DAX measure should be used"],
         "task": "Reproduce both matrices and explain why the results match even though M and DAX execute at different stages.",
         "evidence": "Matching row calculations, reconciled matrix totals and a correct M-versus-DAX comparison",
+    },
+    15: {
+        "screen_title": "Identify the dynamic inputs in the historical rates URL",
+        "screens": [("X-Rates historical page", "05-lab2-xrates-historical-page.png", "The USD historical exchange-rates page with from, amount and date values visible in the address bar.", ["from=USD fixes the base currency", "amount=1 fixes the base amount", "date=YYYY-MM-DD is the value that will become a parameter", "The expected USD historical rates table is visible before extraction"])],
+        "click_path": ["Open the historical X-Rates URL", "Verify from=USD and amount=1", "Choose a valid historical date", "Power BI Desktop > Get data > Web", "Paste the fixed dated URL and choose Transform Data"],
+        "task": "Connect Power BI to the correct USD historical rates webpage and identify the input that will become dynamic.",
+        "evidence": "A Source query connected to the expected historical USD page",
+    },
+    16: {
+        "screen_title": "Extract the three-column rates table with Html.Table",
+        "screens": [("Completed Lab 2 Power Query Editor", "05-lab2-power-query-editor.png", "The supplied completed PBIX shows the ExchangeRates query as a typed three-column X-Rates table with the actual HTML extraction steps.", ["The preview contains currency, direct rate and inverse rate", "Extracted Table From Html is visible in Applied Steps", "Promoted Headers replaces Column1–Column3", "Changed Type assigns Text and numeric types", "The screenshot was captured directly from Completed Lab_2.pbix"])],
+        "click_path": ["Inspect the Source page in Power Query", "Apply the supplied Html.Table selectors", "Verify the three extracted columns", "Promote Headers", "Assign Text and Decimal Number types", "Validate a direct and inverse rate pair"],
+        "task": "Convert the rendered webpage into a typed three-column exchange-rates table.",
+        "evidence": "An extracted rates query with currency, direct rate and inverse rate columns",
+    },
+    17: {
+        "screen_title": "Control the web query with the Date parameter",
+        "screens": [("Date parameter in Power Query", "05-lab2-date-parameter-pq.png", "The Date parameter inside the supplied completed PBIX exposes one editable current value used by ExchangeRates.", ["Date is the single changing input", "The current value uses YYYY-MM-DD", "Manage Parameter opens the parameter definition", "The ExchangeRates query reads this value when its Source step refreshes", "The screenshot was captured directly from Completed Lab_2.pbix"])],
+        "click_path": ["Power Query Editor > Manage Parameters > New Parameter", "Name > Date", "Set the current value", "Edit the Source URL to end with & Date", "For a Date-typed parameter use Date.ToText(Date, \"yyyy-MM-dd\")", "Refresh Preview and verify the requested page"],
+        "task": "Replace the hard-coded web date with a configurable Power Query parameter.",
+        "evidence": "A Source step whose URL is generated from the Date parameter",
+    },
+    18: {
+        "screen_title": "Refresh and validate the parameter-driven exchange-rate table",
+        "screens": [("Completed Lab 2 report", "05-lab2-completed-report.png", "The report page in the supplied completed PBIX displays the refreshed ExchangeRates table.", ["The completed table lists each currency with direct and inverse rates", "Change Date and refresh before validating new values", "Direct and inverse rates should be approximately reciprocal", "The current visual contains totals; explain that adding rates across currencies is not financially meaningful", "The screenshot was captured directly from Completed Lab_2.pbix"])],
+        "click_path": ["Add the three fields to a Table or Matrix", "Edit Parameters > enter another date", "Select OK and refresh", "Validate the date and representative currencies", "Check direct × inverse is approximately 1", "Turn off meaningless currency-rate totals"],
+        "task": "Demonstrate a successful parameter change and validate the resulting historical exchange rates.",
+        "evidence": "A refreshed rate table for the selected date with validation checks recorded",
+    },
+    19: {
+        "screen_title": "Inspect the three PDF pages and select the two invoice tables",
+        "screens": [
+            ("PDF page 1", "06-lab3-pdf-page-1.png", "Page 1 contains the receipt header and the first group of item-code and description rows.", ["The timestamp and TRN appear once near the header", "Item codes and descriptions occupy separate rows", "Quantity, Rate and Value appear beside code rows", "This page is imported as Table001"]),
+            ("PDF page 2", "06-lab3-pdf-page-2.png", "Page 2 continues the purchased items and ends with receipt totals and tender information.", ["This page is imported as Table002", "Item rows continue from Page 1", "Total Quantity, Total, Credit and Change Due are not product rows", "The Page 2 query must be cleaned before append"]),
+            ("PDF page 3", "06-lab3-pdf-page-3.png", "Page 3 contains Shukran loyalty details, terms and store information rather than invoice line items.", ["The connector detects a third table here", "Its business grain differs from the target invoice lines", "It is intentionally excluded from this lab", "Selecting fewer tables is a data-modelling decision, not a connector limitation"]),
+        ],
+        "click_path": ["Power BI Desktop > Home > Get data > PDF", "Select Shukran.pdf", "Preview all three detected tables", "Select Table001 and Table002", "Leave the unrelated third table unselected", "Choose Transform Data"],
+        "task": "Import only the two detected tables that contain the invoice header and line items.",
+        "evidence": "Table001 (Page 1) and Table002 (Page 2) visible as separate queries in Power Query Editor",
+    },
+    20: {
+        "screen_title": "Clean Table002 as a Page 2 staging query",
+        "screens": [("Table002 (Page 2)", "06-lab3-table002-clean-query.png", "The supplied completed PBIX shows Page 2 reduced to Item, Quantity, Rate and Value before it is appended.", ["Column2 and Column3 have been removed", "Receipt summary labels have been filtered out", "The remaining fields are renamed to the shared append schema", "Table002 is italic because Enable load is disabled", "The query still refreshes because Table001 references it"])],
+        "click_path": ["Select Table002 (Page 2)", "Apply the six supplied source types", "Remove Column2 and Column3", "Filter receipt-total and tender labels from Column1", "Rename the four remaining fields", "Right-click Table002 and clear Enable load"],
+        "task": "Create a reusable Page 2 staging query with the same four fields expected by Page 1.",
+        "evidence": "A four-column Table002 staging query that refreshes but does not load independently",
+    },
+    21: {
+        "screen_title": "Append the cleaned Page 2 rows into Table001",
+        "screens": [("Appended Query step", "06-lab3-appended-query.png", "The completed PBIX at the Appended Query step shows Table.Combine stacking the two aligned page queries.", ["Table001 remains the primary model-bound query", "Table002 is referenced by name in Table.Combine", "Rows are stacked rather than matched by a key", "The preview contains mixed header, code and description rows that still require shaping", "The two Page 2 source columns align because their names were standardized first"])],
+        "click_path": ["Rename Table001 fields to Item, Quantity, Rate and Value", "Home > Append Queries", "Choose Table002 (Page 2)", "Confirm Table.Combine in the formula bar", "Verify rows from both pages in the 40-row preview"],
+        "task": "Create one continuous receipt query by appending Page 2 beneath Page 1.",
+        "evidence": "An Appended Query step in Table001 with both pages represented in one four-column preview",
+    },
+    22: {
+        "screen_title": "Turn mixed PDF rows into transaction records",
+        "screens": [("Completed Table001 query", "06-lab3-table001-final-query.png", "The supplied completed PBIX shows the final item-level output and the full sequence used to propagate TRN, Date and descriptions.", ["TRN and Date are filled down from receipt-header rows", "Descriptions are filled up to the preceding 13-character item-code rows", "Temporary Length supports the code/description test and is later removed", "Only transaction rows remain", "The final fields are Item Code, Quantity, Rate, Value, TRN, Date and Item Description"])],
+        "click_path": ["Create TRN with Text.StartsWith and Fill Down", "Create the timestamp field with Text.Contains and Fill Down", "Extract text before GMT and convert to Date", "Insert Text.Length for Item", "Create the description helper using the 13-character test", "Fill Up the description values", "Filter to rows with Quantity"],
+        "task": "Reshape the alternating receipt layout into one complete row per purchased item line.",
+        "evidence": "Item rows enriched with TRN, Date and the matching Item Description",
+    },
+    23: {
+        "screen_title": "Validate the loaded Lab 3 receipt report",
+        "screens": [
+            ("Completed report", "06-lab3-completed-report.png", "The report page in the supplied completed PBIX groups the 17 transformed lines into an item summary.", ["The displayed products reconcile to total Quantity 20", "Total Value reconciles to AED 427.12", "Repeated item codes aggregate into 11 displayed product rows", "Sum of Rate 484.90 is shown but unit rates are not a meaningful additive control", "Only Table001 appears in the model Data pane"]),
+            ("Final Power Query output", "06-lab3-table001-final-query.png", "The final model-bound query contains 17 item-level rows and seven typed columns.", ["Table001 is loaded", "Table002 remains an upstream staging dependency with load disabled", "The temporary Length field is absent", "Final names and data types match the report fields"]),
+        ],
+        "click_path": ["Filter Quantity to non-null", "Remove the first four remaining header rows", "Assign final types", "Remove Length and rename the item fields", "Confirm Table002 load is disabled", "Close & Apply", "Build the item summary", "Reconcile Quantity 20 and Value AED 427.12"],
+        "task": "Load the final receipt table, build the item summary and record the reconciliation controls.",
+        "evidence": "A 17-row model table and a report reconciling to Quantity 20 and Value AED 427.12",
     },
     5: {
         "screen_title": "Build and inspect the model",
