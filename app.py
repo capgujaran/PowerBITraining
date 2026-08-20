@@ -594,6 +594,32 @@ def lab3_solution_download_button(key: str) -> None:
         )
 
 
+def lab4_practice_download_button(key: str) -> None:
+    package = DOWNLOAD_DIR / "lab-4-importing-multiple-files.zip"
+    if package.exists():
+        st.download_button(
+            "Download the Lab 4 multiple-file practice pack (.zip)",
+            data=package.read_bytes(),
+            file_name=package.name,
+            mime="application/zip",
+            key=key,
+            width="stretch",
+        )
+
+
+def lab4_solution_download_button(key: str) -> None:
+    solution = DOWNLOAD_DIR / "completed-lab-4.pbix"
+    if solution.exists():
+        st.download_button(
+            "Download the completed Lab 4 solution (.pbix)",
+            data=solution.read_bytes(),
+            file_name="Completed Lab_4.pbix",
+            mime="application/octet-stream",
+            key=key,
+            width="stretch",
+        )
+
+
 def detailed_installation_lab() -> None:
     lab_banner("Power BI Desktop installation guide", "Choose the same supported Microsoft route demonstrated in class. The route, screenshot, steps and launch checklist update together.")
     route = st.radio("Installation route", ["Microsoft Store · recommended", "Direct 64-bit installer"], horizontal=True, key="install_route")
@@ -1490,6 +1516,211 @@ def detailed_lab3_finalize_report() -> None:
         lab3_solution_download_button("lab3_completed_solution_download")
 
 
+def lab4_year_summary(include_2014: bool = True) -> pd.DataFrame:
+    """Verified controls calculated from the four supplied Lab 4 workbooks."""
+    rows = [
+        (2011, "2011.xlsx", "Sheet1", 8_998, 2_259_450.90, 31_443),
+        (2012, "2012.xlsx", "Sheet1", 10_962, 2_677_438.69, 38_111),
+        (2013, "2013.xlsx", "2013", 13_799, 3_405_746.45, 48_136),
+        (2014, "2014.xlsx", "Sheet1", 17_531, 4_299_865.87, 60_622),
+    ]
+    if not include_2014:
+        rows = rows[:3]
+    return pd.DataFrame(rows, columns=["Year", "File", "Worksheet", "Rows", "Sales", "Quantity"])
+
+
+def detailed_lab4_folder_connection() -> None:
+    lab_banner("Lab 4 · Connect to the annual-files folder", "Start with 2011.xlsx, 2012.xlsx and 2013.xlsx, then let Power Query generate one reusable file-transformation function.")
+    process_strip(
+        [
+            ("Get data", "Folder", "active"),
+            ("Preview", "3 visible .xlsx files", "active"),
+            ("Combine & Transform", "Generate helpers", "active"),
+            ("Power Query", "Inspect dependencies", ""),
+        ]
+    )
+    starter = lab4_year_summary(include_2014=False)[["File", "Worksheet", "Rows"]]
+    st.dataframe(starter, hide_index=True, width="stretch")
+    choice = st.radio(
+        "Folder preview action",
+        ["Combine & Transform Data", "Transform Data"],
+        horizontal=True,
+        key="lab4_folder_preview_action",
+    )
+    if choice == "Combine & Transform Data":
+        st.success("Correct. Power Query will create Sample File, Parameter1, Transform Sample File, Transform File and the final combined query.")
+    else:
+        st.info("Transform Data opens the file listing only. You can build the helper pattern manually, but this lab uses Combine & Transform Data.")
+    st.code(
+        '''Source = Folder.Files("C:\\Users\\user\\Desktop\\ICAI Training\\Lab 3 - Importing Multiple Files\\Old")
+#"Filtered Hidden Files1" = Table.SelectRows(Source, each [Attributes]?[Hidden]? <> true)''',
+        language="powerquery",
+    )
+    st.caption("The physical source folder retains its original name. In this course sequence, the exercise is organized as Lab 4.")
+    lab4_practice_download_button("lab4_practice_step1")
+
+
+def detailed_lab4_dynamic_object() -> None:
+    lab_banner("Lab 4 · Keep sheet selection dynamic", "Return the workbook-object table from Parameter1 so the final query expands each object's Data instead of navigating to a literal Sheet1 name.")
+    process_strip(
+        [
+            ("Sample File", "First file", "active"),
+            ("Parameter1", "Workbook binary", "active"),
+            ("Excel.Workbook", "Object table", "active"),
+            ("Transform File", "Repeat per binary", ""),
+        ]
+    )
+    workbook_map = lab4_year_summary()[["File", "Worksheet"]]
+    workbook_map["Fixed Sheet1 result"] = workbook_map["Worksheet"].eq("Sheet1").map({True: "Works", False: "Fails"})
+    st.dataframe(workbook_map, hide_index=True, width="stretch")
+    object_choice = st.radio(
+        "Select in the Combine Files dialog",
+        ["Parameter1 [1] · workbook object result", "Sheet1 · fixed worksheet child"],
+        horizontal=True,
+        key="lab4_object_choice",
+    )
+    if object_choice.startswith("Parameter1"):
+        st.success("Recommended: the function returns Name, Data, Item, Kind and Hidden, so the final query can expand Data without depending on the sheet label.")
+    else:
+        st.error("This hard-codes Sheet1. It will not navigate to 2013.xlsx because that workbook's worksheet is named 2013.")
+    st.code(
+        '''(Parameter1 as binary) =>
+let
+    Source = Excel.Workbook(Parameter1, null, true)
+in
+    Source''',
+        language="powerquery",
+    )
+    st.info("Dynamic worksheet naming does not mean every workbook structure is accepted. The expanded Data tables must still provide the expected 24 raw columns.")
+
+
+def detailed_lab4_expand_transform() -> None:
+    lab_banner("Lab 4 · Expand and standardize every file", "Expand the generated function output, remove navigation metadata and Row ID, promote headers, apply types and eliminate repeated headers.")
+    process_strip(
+        [
+            ("Transform File", "Expand object rows", "active"),
+            ("Data", "Expand 24 columns", "active"),
+            ("Remove", "Metadata + Row ID", "active"),
+            ("Promote", "Business headers", "active"),
+            ("Type", "Numbers + en-US dates", "active"),
+            ("Filter", "Repeated headers", ""),
+        ]
+    )
+    schema = pd.DataFrame(
+        [
+            ["Identifiers", "Order ID, Customer ID, Product ID", "Text"],
+            ["Dates", "Order Date, Ship Date", "Date using English (United States)"],
+            ["Whole numbers", "Postal Code, Quantity", "Whole Number"],
+            ["Decimals", "Sales, Discount, Profit, Shipping Cost", "Decimal Number"],
+            ["Descriptions", "All remaining business fields", "Text"],
+        ],
+        columns=["Field group", "Examples", "Final type"],
+    )
+    st.dataframe(schema, hide_index=True, width="stretch")
+    apply_transform = st.toggle("Apply the complete expansion and cleaning sequence", value=True, key="lab4_apply_transform")
+    sample = pd.DataFrame(
+        [
+            ["IN-2011-81826", "2011-07-11", "2011-09-11", "Toby Swindell", "New Zealand", 1822.080, 4, 0.0, 564.840],
+            ["CA-2012-124891", "2012-07-31", "2012-07-31", "Rick Hansen", "United States", 2309.650, 7, 0.0, 762.185],
+            ["IN-2013-77878", "2013-05-02", "2013-07-02", "Justin Ritter", "Australia", 3709.395, 9, 0.1, -288.765],
+        ],
+        columns=["Order ID", "Order Date", "Ship Date", "Customer Name", "Country", "Sales", "Quantity", "Discount", "Profit"],
+    )
+    if apply_transform:
+        st.dataframe(sample.style.format({"Sales": "{:,.3f}", "Discount": "{:.1%}", "Profit": "{:,.3f}"}), hide_index=True, width="stretch")
+        st.success("The combined result now has one stable 23-field business schema. Data.Column1 (Row ID) and workbook navigation metadata are absent.")
+    else:
+        raw = pd.DataFrame(
+            [["2011.xlsx", "Sheet1", "Table", "Data.Column1 … Data.Column24"], ["2013.xlsx", "2013", "Table", "Data.Column1 … Data.Column24"]],
+            columns=["Source.Name", "Name", "Kind", "Nested fields"],
+        )
+        st.dataframe(raw, hide_index=True, width="stretch")
+        st.warning("The raw expansion still contains workbook metadata and generic column names.")
+    with st.expander("Complete Lab 4 folder M query", expanded=True):
+        st.code(
+            '''let
+    Source = Folder.Files("C:\\Users\\user\\Desktop\\ICAI Training\\Lab 3 - Importing Multiple Files\\Old"),
+    #"Filtered Hidden Files1" = Table.SelectRows(Source, each [Attributes]?[Hidden]? <> true),
+    #"Invoke Custom Function1" = Table.AddColumn(#"Filtered Hidden Files1", "Transform File", each #"Transform File"([Content])),
+    #"Renamed Columns1" = Table.RenameColumns(#"Invoke Custom Function1", {{"Name", "Source.Name"}}),
+    #"Removed Other Columns1" = Table.SelectColumns(#"Renamed Columns1", {"Source.Name", "Transform File"}),
+    #"Expanded Table Column1" = Table.ExpandTableColumn(#"Removed Other Columns1", "Transform File", Table.ColumnNames(#"Transform File"(#"Sample File"))),
+    #"Changed Type" = Table.TransformColumnTypes(#"Expanded Table Column1",{{"Source.Name", type text}, {"Name", type text}, {"Data", type any}, {"Item", type text}, {"Kind", type text}, {"Hidden", type logical}}),
+    #"Expanded Data" = Table.ExpandTableColumn(#"Changed Type", "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24"}, {"Data.Column1", "Data.Column2", "Data.Column3", "Data.Column4", "Data.Column5", "Data.Column6", "Data.Column7", "Data.Column8", "Data.Column9", "Data.Column10", "Data.Column11", "Data.Column12", "Data.Column13", "Data.Column14", "Data.Column15", "Data.Column16", "Data.Column17", "Data.Column18", "Data.Column19", "Data.Column20", "Data.Column21", "Data.Column22", "Data.Column23", "Data.Column24"}),
+    #"Removed Columns" = Table.RemoveColumns(#"Expanded Data",{"Source.Name", "Name", "Data.Column1", "Item", "Kind", "Hidden"}),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Removed Columns", [PromoteAllScalars=true]),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Promoted Headers",{{"Order ID", type text}, {"Order Date", type any}, {"Ship Date", type any}, {"Ship Mode", type text}, {"Customer ID", type text}, {"Customer Name", type text}, {"Segment", type text}, {"City", type text}, {"State", type text}, {"Country", type text}, {"Postal Code", Int64.Type}, {"Market", type text}, {"Region", type text}, {"Product ID", type text}, {"Category", type text}, {"Sub-Category", type text}, {"Product Name", type text}, {"Sales", type number}, {"Quantity", Int64.Type}, {"Discount", type number}, {"Profit", type number}, {"Shipping Cost", type number}, {"Order Priority", type text}}),
+    #"Changed Type with Locale" = Table.TransformColumnTypes(#"Changed Type1", {{"Order Date", type date}}, "en-US"),
+    #"Changed Type with Locale1" = Table.TransformColumnTypes(#"Changed Type with Locale", {{"Ship Date", type date}}, "en-US"),
+    #"Filtered Rows" = Table.SelectRows(#"Changed Type with Locale1", each [Order ID] <> "Order ID")
+in
+    #"Filtered Rows"''',
+            language="powerquery",
+        )
+
+
+def detailed_lab4_baseline_report() -> None:
+    lab_banner("Lab 4 · Load the 2011–2013 baseline", "Close & Apply, build a clustered column chart and reconcile the first three annual files before testing a new-file refresh.")
+    summary = lab4_year_summary(include_2014=False)
+    process_strip(
+        [
+            ("Close & Apply", "Run 3 files", "active"),
+            ("Column chart", "Order Date Year", "active"),
+            ("Values", "Sum of Sales", "active"),
+            ("Reconcile", "3 annual controls", ""),
+        ]
+    )
+    metrics = st.columns(3)
+    metrics[0].metric("Starter files", "3")
+    metrics[1].metric("Rows", f"{summary['Rows'].sum():,}")
+    metrics[2].metric("Sales", f"{summary['Sales'].sum():,.2f}")
+    left, right = st.columns([1.2, 1])
+    with left:
+        st.bar_chart(summary.set_index("Year")[["Sales"]])
+    with right:
+        st.dataframe(summary[["Year", "Rows", "Sales"]].style.format({"Rows": "{:,.0f}", "Sales": "{:,.2f}"}), hide_index=True, width="stretch")
+    baseline_checked = st.checkbox("I confirmed that the report contains only 2011, 2012 and 2013", key="lab4_baseline_checked")
+    if baseline_checked:
+        st.success("Baseline recorded. Add 2014.xlsx only after this three-year report reconciles.")
+    else:
+        st.info("Use this checkpoint to separate the original load from the later refresh result.")
+
+
+def detailed_lab4_refresh_complete() -> None:
+    lab_banner("Lab 4 · Add 2014 and refresh", "Copy the fourth workbook into the monitored folder and prove that the same function discovers, cleans and loads it without a manual append.")
+    added_2014 = st.toggle("2014.xlsx has been added to the folder", value=True, key="lab4_add_2014")
+    summary = lab4_year_summary(include_2014=added_2014)
+    process_strip(
+        [
+            ("Folder.Files", f"{len(summary)} visible workbooks", "active"),
+            ("Transform File", "Invoke per binary", "active"),
+            ("Refresh", "Reuse cleaning steps", "active" if added_2014 else ""),
+            ("Report", f"{len(summary)} years", "active" if added_2014 else ""),
+        ]
+    )
+    metrics = st.columns(4)
+    metrics[0].metric("Files", f"{len(summary)}")
+    metrics[1].metric("Rows", f"{summary['Rows'].sum():,}", f"+{17_531:,}" if added_2014 else None)
+    metrics[2].metric("Sales", f"{summary['Sales'].sum():,.2f}", f"+{4_299_865.87:,.2f}" if added_2014 else None)
+    metrics[3].metric("Latest year", f"{int(summary['Year'].max())}")
+    st.bar_chart(summary.set_index("Year")[["Sales"]])
+    st.dataframe(summary[["File", "Worksheet", "Rows", "Sales", "Quantity"]].style.format({"Rows": "{:,.0f}", "Sales": "{:,.2f}", "Quantity": "{:,.0f}"}), hide_index=True, width="stretch")
+    schema_check = st.checkbox("I verified that 2014 used the existing Transform File steps without a query edit", key="lab4_refresh_schema_check")
+    if added_2014 and schema_check:
+        st.success("Lab 4 complete: 2014 contributes 17,531 rows and Sales 4,299,865.87; the refreshed model reconciles to 51,290 rows and Sales 12,642,501.91.")
+    elif added_2014:
+        st.info("The fourth bar is visible. Complete the function-reuse control before signing off the lab.")
+    else:
+        st.warning("The folder still contains only the baseline files, so Refresh cannot add a 2014 bar.")
+    st.markdown("#### Lab 4 complete")
+    st.caption("Use the practice pack to repeat the before-and-after refresh, then compare with the exact completed PBIX supplied for this lab.")
+    practice_col, solution_col = st.columns(2)
+    with practice_col:
+        lab4_practice_download_button("lab4_practice_complete")
+    with solution_col:
+        lab4_solution_download_button("lab4_completed_solution_download")
+
+
 def append_sample_tables(scenario: str, normalize_headers: bool, inject_duplicate: bool) -> list[tuple[str, str, pd.DataFrame]]:
     january = pd.DataFrame(
         {
@@ -2255,6 +2486,11 @@ def detailed_module_lab(lab_id: int) -> None:
         21: detailed_lab3_append_pages,
         22: detailed_lab3_extract_fields,
         23: detailed_lab3_finalize_report,
+        24: detailed_lab4_folder_connection,
+        25: detailed_lab4_dynamic_object,
+        26: detailed_lab4_expand_transform,
+        27: detailed_lab4_baseline_report,
+        28: detailed_lab4_refresh_complete,
         5: detailed_model_lab,
         6: detailed_dax_lab,
         7: detailed_visual_lab,
@@ -2385,6 +2621,36 @@ def interactive_lab() -> None:
             st.success("Correct. Compare and validate each currency rate; do not interpret their sum as a financial total.")
         elif refresh_answer:
             st.warning("The visual can add the values, but currencies with different units and scales do not form a meaningful total.")
+    elif lab_id == 24:
+        folder_answer = st.radio("Why choose Combine & Transform Data?", ["It creates a reusable sample-file transformation and function", "It creates a DAX calendar", "It publishes the report", "It renames the folder"], index=None, key="lab4_folder_control_answer")
+        if folder_answer == "It creates a reusable sample-file transformation and function":
+            st.success("Correct. The generated helper queries apply one governed transformation to each visible file.")
+        elif folder_answer:
+            st.warning("Return to the folder preview and compare the two available transformation choices.")
+    elif lab_id == 25:
+        sheet_answer = st.radio("What breaks a fixed Sheet1 navigation step in this source set?", ["2013.xlsx uses a worksheet named 2013", "2011.xlsx is hidden", "Sales is text", "The folder has no files"], index=None, key="lab4_sheet_control_answer")
+        if sheet_answer == "2013.xlsx uses a worksheet named 2013":
+            st.success("Correct. Return the workbook object table through Parameter1 and expand Data without relying on the worksheet label.")
+        elif sheet_answer:
+            st.warning("Compare the verified worksheet names displayed in the lab.")
+    elif lab_id == 26:
+        expand_answer = st.radio("Why is Data.Column1 removed?", ["It is the unused Row ID", "It contains Sales", "It is the worksheet parameter", "It stores Order Date"], index=None, key="lab4_expand_control_answer")
+        if expand_answer == "It is the unused Row ID":
+            st.success("Correct. Removing it leaves the 23 business fields from Order ID through Order Priority.")
+        elif expand_answer:
+            st.warning("The raw workbooks contain 24 columns; the first is Row ID.")
+    elif lab_id == 27:
+        baseline_answer = st.radio("Which baseline is expected before adding 2014.xlsx?", ["33,759 rows and Sales 8,342,636.04", "51,290 rows and Sales 12,642,501.91", "17 rows and AED 427.12", "One worksheet row"], index=None, key="lab4_baseline_control_answer")
+        if baseline_answer == "33,759 rows and Sales 8,342,636.04":
+            st.success("Correct. That baseline covers the 2011–2013 starter files only.")
+        elif baseline_answer:
+            st.warning("Use the three-year validation table above before introducing the fourth workbook.")
+    elif lab_id == 28:
+        automation_answer = st.radio("Why does 2014 appear without a manual append?", ["Folder.Files discovers it and Transform File runs the existing steps", "The visual forecasts it", "Power BI copies 2013", "The PBIX downloads it from the web"], index=None, key="lab4_automation_control_answer")
+        if automation_answer == "Folder.Files discovers it and Transform File runs the existing steps":
+            st.success("Correct. Refresh enumerates the folder again and applies the same transformation contract to the new binary.")
+        elif automation_answer:
+            st.warning("The automation comes from the folder query and generated custom function, not from the chart.")
     elif lab_id == 5:
         duplicate = st.toggle("Introduce a duplicate ProductKey in the Product dimension")
         st.write("Relationship: **Product (one) → Sales (many)**" if not duplicate else "Relationship cannot remain one-to-many because the dimension key is no longer unique.")

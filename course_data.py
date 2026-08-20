@@ -1,9 +1,9 @@
 """Course content for the three-day Power BI programme."""
 
 SCHEDULE = [
-    {"day": 1, "theme": "Labs 1–3 · Prepare, parameterize and combine", "focus": "Clean retail data, parameterize historical web rates and reshape a multi-page PDF receipt", "modules": "1–15"},
-    {"day": 2, "theme": "Model, calculate and communicate", "focus": "Data modelling, DAX, visual design and report experience", "modules": "16–19"},
-    {"day": 3, "theme": "Automate, audit and publish", "focus": "M language, audit analytics, Power BI Service and capstone", "modules": "20–23"},
+    {"day": 1, "theme": "Labs 1–4 · Prepare, parameterize and combine", "focus": "Clean retail data, parameterize web rates, reshape a PDF and automate a multi-file folder refresh", "modules": "1–20"},
+    {"day": 2, "theme": "Model, calculate and communicate", "focus": "Data modelling, DAX, visual design and report experience", "modules": "21–24"},
+    {"day": 3, "theme": "Automate, audit and publish", "focus": "M language, audit analytics, Power BI Service and capstone", "modules": "25–28"},
 ]
 
 MODULES = [
@@ -207,6 +207,71 @@ MODULES = [
         "check": ("Which controls best validate the completed receipt?", ["Total Quantity 20 and total Value AED 427.12", "Sum of Item Codes and average TRN", "Three loaded model tables", "The number of Applied Steps only"], 0, "Quantity and transaction value reconcile directly to the source receipt; a sum of unit rates is not a meaningful receipt total."),
     },
     {
+        "id": 24, "code": "D1.16", "day": 1, "duration": "40 min", "lab_group": "Lab 4", "lab_step": 1,
+        "title": "Connect to a folder and combine the starter files",
+        "subtitle": "Use Combine & Transform Data for the 2011–2013 workbooks",
+        "outcomes": ["Connect Power BI to a folder of similarly structured Excel files", "Explain the difference between Transform Data and Combine & Transform Data", "Exclude hidden files before invoking the generated transformation function", "Confirm that 2011.xlsx, 2012.xlsx and 2013.xlsx form the starter set"],
+        "concepts": [
+            ("Folder connector", "Folder.Files returns one row per file with its binary Content and file-system metadata. Power Query does not yet know which workbook object contains the business rows.", "The starter folder contains 2011.xlsx, 2012.xlsx and 2013.xlsx.", "Treat the folder as a repeatable ingestion boundary, not as one manually selected workbook."),
+            ("Combine & Transform Data", "Combine & Transform Data creates a sample-file query, a parameter, a Transform File function and a final combined query. Transform Data alone opens only the file listing and leaves the combine architecture for you to build.", "Select Combine & Transform Data from the folder preview.", "Use the generated helper-query pattern when the files share one logical schema."),
+            ("Visible files only", "Temporary and hidden files can break a folder refresh. The generated filter keeps only files whose Hidden attribute is not true before invoking the function.", "Table.SelectRows(Source, each [Attributes]?[Hidden]? <> true).", "Filter operational noise before parsing file contents."),
+        ],
+        "lab": ("Connect to the starter folder", "Lab 4 · 2011–2013 Excel workbooks", ["Home > Get data > Folder", "Browse to the folder containing 2011.xlsx, 2012.xlsx and 2013.xlsx", "Verify the three visible files in the preview", "Select Combine & Transform Data", "Confirm that Power Query creates the helper queries and combined query"], "A folder query and generated Transform File helper architecture"),
+        "check": ("What does Combine & Transform Data add beyond Transform Data?", ["A sample-file transformation and reusable function for every visible file", "A DAX measure", "A Power BI Service workspace", "A fixed 2014 forecast"], 0, "Combine & Transform Data generates the helper queries and function that apply the sample transformation to every file."),
+    },
+    {
+        "id": 25, "code": "D1.17", "day": 1, "duration": "45 min", "lab_group": "Lab 4", "lab_step": 2,
+        "title": "Keep workbook object selection dynamic",
+        "subtitle": "Select the parameter result instead of hard-coding Sheet1",
+        "outcomes": ["Explain the role of Parameter1, Sample File and Transform File", "Avoid a navigation step tied to a literal sheet name", "Verify that the function returns workbook objects with Name, Data, Item, Kind and Hidden", "Handle the 2013 workbook whose sheet is named 2013 rather than Sheet1"],
+        "concepts": [
+            ("Why a fixed Sheet1 fails", "Selecting the Sheet1 child creates navigation logic that expects that exact object name in every workbook. In this source set, 2013.xlsx uses a worksheet named 2013 while the other files use Sheet1.", "A refresh tied to Item=\"Sheet1\" would fail or omit the differently named workbook.", "Do not confuse consistent content structure with consistent worksheet names."),
+            ("Select the parameterized workbook result", "In the Combine Files dialog, select the top Parameter1 result so the helper function returns the workbook navigation table. The final query can then expand the Data table without depending on the worksheet label.", "The returned fields are Name, Data, Item, Kind and Hidden.", "Parameterize the file binary and expand its data at object level."),
+            ("Generated helper queries", "Sample File supplies the design-time example, Parameter1 passes each binary into the function and Transform File repeats the same logic for every visible file. The final folder query invokes that function row by row.", "Table.AddColumn(..., \"Transform File\", each #\"Transform File\"([Content])).", "Edit the helper transformation once; refresh reuses it for every file."),
+        ],
+        "lab": ("Configure the Combine Files dialog", "Generated Lab 4 helper queries", ["Keep Sample File set to First file", "Expand Parameter1 [1] to inspect the available worksheet", "Select the Parameter1 result rather than the literal Sheet1 child", "Choose OK", "Inspect Sample File, Parameter1, Transform Sample File and Transform File", "Confirm the combined output exposes a nested Data column"], "A reusable function that tolerates the different 2013 worksheet name"),
+        "check": ("Why should the lab avoid a fixed Sheet1 navigation step?", ["The 2013 workbook uses a sheet named 2013", "Excel files cannot contain worksheets", "The folder connector deletes sheet names", "The 2014 file is a PDF"], 0, "The workbook contents are structurally compatible, but the worksheet object name is not identical in every file."),
+    },
+    {
+        "id": 26, "code": "D1.18", "day": 1, "duration": "75 min", "lab_group": "Lab 4", "lab_step": 3,
+        "title": "Expand and clean the combined workbook data",
+        "subtitle": "Promote headers, apply types and remove repeated header rows",
+        "outcomes": ["Expand Transform File and the nested Data tables", "Remove workbook metadata and the unused Row ID field", "Promote the business headers and assign the supplied types", "Apply en-US locale to Order Date and Ship Date", "Filter repeated Order ID header rows"],
+        "concepts": [
+            ("Two expansion levels", "The first expansion exposes the workbook navigation fields returned by Transform File. Expanding Data then opens the 24 raw worksheet columns for every accepted workbook.", "Expand Transform File, then expand Data.Column1 through Data.Column24.", "A nested table must be expanded before its fields become ordinary columns."),
+            ("Shape the business schema", "Remove Source.Name, workbook-object metadata and Data.Column1, which is the unused Row ID. Promote the first remaining row so Order ID through Order Priority become field names.", "The loaded business table contains 23 fields after Row ID is removed.", "Keep provenance only when it has a defined analytical use."),
+            ("Types, locale and repeated headers", "Assign identifiers and descriptions as Text, numeric observations as Whole or Decimal Number and convert both date fields with English (United States). Finally remove any repeated header rows where Order ID equals Order ID.", "Table.TransformColumnTypes(..., \"en-US\") followed by Table.SelectRows(... each [Order ID] <> \"Order ID\").", "Finish a folder combine with schema and row-quality controls."),
+        ],
+        "lab": ("Transform the combined data", "Combined folder query", ["Expand the Transform File column", "Expand Data.Column1 through Data.Column24", "Remove Source.Name, workbook metadata and Data.Column1", "Promote the first row as headers", "Apply the supplied text, whole-number and decimal types", "Convert Order Date and Ship Date to Date using English (United States)", "Filter rows where Order ID equals the header text"], "One typed 23-column table containing the 2011–2013 transactions"),
+        "check": ("What does Data.Column1 represent in the supplied files?", ["The unused Row ID field", "Sales", "Order Date", "The worksheet name"], 0, "The raw worksheet has 24 columns; removing Data.Column1 drops Row ID and leaves 23 business fields."),
+    },
+    {
+        "id": 27, "code": "D1.19", "day": 1, "duration": "45 min", "lab_group": "Lab 4", "lab_step": 4,
+        "title": "Load and validate Sales by Year",
+        "subtitle": "Build the 2011–2013 column chart before adding the new file",
+        "outcomes": ["Close & Apply the combined query", "Create a column chart using Order Date year and Sum of Sales", "Validate row counts and sales totals for the three starter files", "Establish a before-refresh baseline"],
+        "concepts": [
+            ("Close & Apply", "Close & Apply evaluates the folder query, runs the generated function for every visible starter file and loads the combined result into the semantic model.", "The 2011–2013 baseline contains 33,759 rows.", "Record a baseline before testing incremental file arrival."),
+            ("Sales by Year", "A clustered column chart makes the contribution of each annual file easy to see. Use the Year level from Order Date on the X-axis and Sum of Sales on the Y-axis.", "2011 = 2,259,450.90; 2012 = 2,677,438.69; 2013 = 3,405,746.45.", "A chart is useful evidence only when its values reconcile to the source files."),
+            ("Before-refresh control", "The first report should show exactly three years. This snapshot proves what the model contained before 2014.xlsx was introduced.", "Baseline sales total = 8,342,636.04.", "Separate the initial load test from the new-file refresh test."),
+        ],
+        "lab": ("Build the baseline report", "Clean 2011–2013 folder query", ["Home > Close & Apply", "Add a Clustered column chart", "Place Order Date Year on the X-axis", "Place Sales on the Y-axis and keep Sum aggregation", "Confirm only 2011, 2012 and 2013 appear", "Reconcile the three annual sales totals"], "A validated three-column Sales by Year baseline"),
+        "check": ("What should the baseline chart display before 2014.xlsx is added?", ["Three bars for 2011, 2012 and 2013", "Only one combined total", "A 2014 bar", "Worksheet names on the Y-axis"], 0, "The starter folder contains three annual files, so the first report should show three years."),
+    },
+    {
+        "id": 28, "code": "D1.20", "day": 1, "duration": "45 min", "lab_group": "Lab 4", "lab_step": 5,
+        "title": "Add 2014 and prove refresh automation",
+        "subtitle": "Reuse the same function for a newly arrived workbook",
+        "outcomes": ["Add 2014.xlsx to the monitored folder", "Refresh Power BI without editing the query", "Explain how the generated Transform File function processes the new workbook", "Validate the new 2014 sales bar and complete Lab 4"],
+        "concepts": [
+            ("New-file refresh", "After 2014.xlsx is copied into the same folder, Refresh reruns Folder.Files, discovers the new binary and invokes the existing Transform File function for it.", "No new query or manual append is required.", "Folder automation scales by repeating the same governed transformation."),
+            ("Schema contract", "Automatic refresh succeeds only while the new workbook satisfies the expected business schema and conversion rules. A missing column, extra header, changed type or inaccessible path can still cause an error.", "Validate the refreshed row count, year list and sales total rather than assuming success.", "Automation is a repeatable contract, not immunity from source changes."),
+            ("Final reconciliation", "The refreshed table contains 51,290 rows. The 2014 file adds 17,531 rows and Sales of 4,299,865.87, bringing combined Sales to 12,642,501.91.", "The report now shows four bars from 2011 through 2014.", "A successful Lab 4 refresh is evidenced by both the new bar and reconciled totals."),
+        ],
+        "lab": ("Refresh the folder solution", "Completed Lab 4 folder model", ["Copy 2014.xlsx into the monitored folder", "Return to Power BI Desktop and select Refresh", "Confirm no Power Query edit is required", "Verify a 2014 bar appears", "Reconcile 17,531 new rows and Sales 4,299,865.87", "Confirm final rows 51,290 and Sales 12,642,501.91", "Download the exact completed PBIX for comparison"], "A four-year automatically refreshed report and completed Lab 4 solution"),
+        "check": ("Why does 2014 appear after Refresh without a manual append?", ["Folder.Files discovers the new file and invokes the existing Transform File function", "The chart invents a forecast", "Power BI renames 2013", "The PBIX embeds every future workbook"], 0, "The folder query enumerates the current files on refresh and applies the same function to each eligible binary."),
+    },
+    {
         "id": 5, "code": "D2.1", "day": 2, "duration": "90 min",
         "title": "Design a finance-ready data model",
         "subtitle": "Build a star schema with predictable filter flow",
@@ -341,6 +406,8 @@ RESOURCES = [
     ("Lab 2 · Completed solution PBIX", "Completed parameter-driven historical exchange-rates query and report for comparison after finishing all four Lab 2 steps", "completed-lab-2.pbix"),
     ("Lab 3 · Original Shukran receipt PDF", "The three-page receipt used to detect, append and reshape the two invoice-page tables", "lab-3-shukran.pdf"),
     ("Lab 3 · Completed solution PBIX", "Completed PDF import with Page 2 staging, append, header/detail extraction, disabled staging load and reconciled report", "completed-lab-3.pbix"),
+    ("Lab 4 · Multiple-file practice pack", "2011–2013 starter workbooks plus the separate 2014 workbook to add only after the baseline report is complete", "lab-4-importing-multiple-files.zip"),
+    ("Lab 4 · Completed solution PBIX", "Exact completed folder-combine solution supplied in the Final folder, including the refreshed 2011–2014 Sales by Year report", "completed-lab-4.pbix"),
     ("Day 1 · Data preparation labs", "Queries, cleaning, folder ingestion and combining exercises", "day-1-data-preparation-labs.zip"),
     ("Day 2 · Model and DAX labs", "Model-building, calculations and report-design exercises", "day-2-model-dax-labs.zip"),
     ("Day 3 · Audit analytics labs", "Audit tests, Benford analysis and capstone inputs", "day-3-audit-analytics-labs.zip"),
@@ -483,6 +550,44 @@ TOOL_LABS = {
         "click_path": ["Filter Quantity to non-null", "Remove the first four remaining header rows", "Assign final types", "Remove Length and rename the item fields", "Confirm Table002 load is disabled", "Close & Apply", "Build the item summary", "Reconcile Quantity 20 and Value AED 427.12"],
         "task": "Load the final receipt table, build the item summary and record the reconciliation controls.",
         "evidence": "A 17-row model table and a report reconciling to Quantity 20 and Value AED 427.12",
+    },
+    24: {
+        "screen_title": "Start the folder-combine workflow",
+        "screens": [("Folder preview", "07-lab4-folder-preview.png", "The folder connector preview lists the three starter Excel binaries before any workbook content is expanded.", ["2011.xlsx, 2012.xlsx and 2013.xlsx form the baseline", "The Content column contains the binary passed to the helper function", "Combine & Transform Data creates the reusable combine architecture", "Transform Data alone would open only the file listing", "Hidden files are filtered before function invocation"])],
+        "click_path": ["Power BI Desktop > Home > Get data > Folder", "Browse to the starter folder", "Confirm the three annual Excel files", "Select Combine & Transform Data", "Wait for the Combine Files dialog"],
+        "task": "Connect to the 2011–2013 starter folder and create Power Query's generated combine-file helper queries.",
+        "evidence": "A folder query, Sample File, Parameter1 and Transform File helper visible in Power Query Editor",
+    },
+    25: {
+        "screen_title": "Avoid hard-coding the worksheet name",
+        "screens": [("Combine Files object selection", "07-lab4-combine-parameter.png", "The Combine Files dialog exposes the Parameter1 workbook result and its worksheet child.", ["Sample File is the design-time example only", "Select the top Parameter1 result to retain the workbook navigation table", "Selecting the literal Sheet1 child would tie navigation to that object name", "2013.xlsx uses a sheet named 2013 rather than Sheet1", "The dynamic result exposes Name, Data, Item, Kind and Hidden for later expansion"])],
+        "click_path": ["Keep Sample File set to First file", "Expand Parameter1 [1] and inspect the worksheet child", "Select Parameter1 [1], not the literal Sheet1 child", "Choose OK", "Inspect the generated Transform File function", "Confirm the final query contains a nested Data column"],
+        "task": "Configure the generated function so structurally compatible workbooks can be combined even when their worksheet labels differ.",
+        "evidence": "A parameterized helper function returning workbook object rows rather than a fixed Sheet1 navigation result",
+    },
+    26: {
+        "screen_title": "Expand the nested workbook tables and apply the final schema",
+        "screens": [("Combine Files object selection", "07-lab4-combine-parameter.png", "The selected workbook result is the source of the nested Data tables expanded in the final folder query.", ["Expand Transform File first", "Expand Data.Column1 through Data.Column24 next", "Remove workbook metadata and Data.Column1 (Row ID)", "Promote Order ID through Order Priority as headers", "Apply en-US to Order Date and Ship Date", "Filter repeated Order ID header rows"])],
+        "click_path": ["Expand Transform File", "Expand the nested Data field", "Remove Source.Name, workbook metadata and Data.Column1", "Use First Row as Headers", "Assign the supplied 23 field types", "Convert both date fields using English (United States)", "Filter Order ID <> Order ID"],
+        "task": "Turn the generated folder output into one typed, analysis-ready transaction table.",
+        "evidence": "A 23-column combined query with valid dates, numeric Sales and no repeated header rows",
+    },
+    27: {
+        "screen_title": "Establish the 2011–2013 baseline",
+        "screens": [("Sales by Year before the new file", "07-lab4-sales-2011-2013.png", "The first report refresh contains only the three starter years.", ["The X-axis uses the Year level from Order Date", "The Y-axis uses Sum of Sales", "2011 reconciles to 2.26M", "2012 reconciles to 2.68M", "2013 reconciles to 3.41M", "The source report banner uses its original legacy lab number; this course organizes the exercise as Lab 4"])],
+        "click_path": ["Power Query Editor > Close & Apply", "Add a Clustered column chart", "Place Order Date Year on the X-axis", "Place Sales on the Y-axis", "Confirm exactly three bars", "Reconcile annual and combined Sales"],
+        "task": "Build and validate the before-refresh Sales by Year report for the three starter files.",
+        "evidence": "Three annual bars and baseline Sales of 8,342,636.04 across 33,759 rows",
+    },
+    28: {
+        "screen_title": "Add 2014 and validate the automated refresh",
+        "screens": [
+            ("2014 workbook added", "07-lab4-add-2014.png", "The monitored folder now contains a fourth annual workbook.", ["2014.xlsx is added only after the baseline is validated", "The existing folder query will discover it on refresh", "No new manual append or transformation copy is required", "The new workbook must still satisfy the expected schema"]),
+            ("Sales by Year after refresh", "07-lab4-sales-2011-2014.png", "The refreshed report includes the newly processed 2014 transactions.", ["A fourth bar confirms the new file reached the model", "2014 Sales reconcile to 4.30M", "The final table has 51,290 rows", "Combined Sales reconcile to 12,642,501.91", "The source report banner uses its original legacy lab number; this course organizes the exercise as Lab 4"]),
+        ],
+        "click_path": ["Copy 2014.xlsx into the monitored folder", "Power BI Desktop > Home > Refresh", "Wait for the folder query and helper function to complete", "Confirm 2014 appears in the chart", "Reconcile the new-file and final totals", "Compare with Completed Lab_4.pbix"],
+        "task": "Prove that the existing folder transformation automatically processes a newly arrived annual workbook.",
+        "evidence": "Four annual bars, 51,290 rows and combined Sales of 12,642,501.91",
     },
     5: {
         "screen_title": "Build and inspect the model",
