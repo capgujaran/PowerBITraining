@@ -36,7 +36,7 @@ jobs:
       - name: Sync course content and lab files
         run: python ../scripts/sync_site_content.py
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Build static website
         run: pnpm build:static
       - name: Configure GitHub Pages
