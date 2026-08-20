@@ -275,7 +275,12 @@ function Home({ completed, openModule, navigate }: { completed: number[]; openMo
           </dl>
         </div>
         <div className="hero__visual" aria-label="Power BI workflow illustration">
-          <div className="hero__portrait"><img src="./assets/trainer/pradeep-portrait.png" alt="CA Pradeep Gujaran" /></div>
+          <div className="hero__dashboard">
+            <img
+              src="./assets/screenshots/12-capstone-dashboard.png"
+              alt="Completed Power BI sales dashboard with KPIs, charts, maps and analysis visuals"
+            />
+          </div>
           <div className="hero__note"><span>01</span><p><strong>Prepare</strong>Clean and control the source.</p></div>
           <div className="hero__note hero__note--two"><span>02</span><p><strong>Model</strong>Create reliable relationships.</p></div>
           <div className="hero__note hero__note--three"><span>03</span><p><strong>Communicate</strong>Explain what matters.</p></div>
