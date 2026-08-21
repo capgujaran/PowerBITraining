@@ -276,14 +276,19 @@ function Home({ completed, openModule, navigate }: { completed: number[]; openMo
         </div>
         <div className="hero__visual" aria-label="Power BI workflow illustration">
           <div className="hero__dashboard">
-            <img
-              src="./assets/screenshots/12-capstone-dashboard.png"
-              alt="Completed Power BI sales dashboard with KPIs, charts, maps and analysis visuals"
-            />
+            <div className="hero__kpis" aria-label="Example dashboard KPIs">
+              <div className="hero__kpi"><span>Revenue</span><strong>$12.8M</strong><small>↑ 18.6%</small></div>
+              <div className="hero__kpi"><span>Profit</span><strong>$2.45M</strong><small>↑ 23.7%</small></div>
+              <div className="hero__kpi"><span>Orders</span><strong>24.3K</strong><small>↑ 15.2%</small></div>
+              <div className="hero__kpi"><span>Growth</span><strong>18.6%</strong><small>↑ 4.1 pts</small></div>
+            </div>
+            <div className="hero__dashboard-body">
+              <img
+                src="./assets/screenshots/homepage-dashboard-infographic-v2.png"
+                alt="Business intelligence charts, regional analysis and a data-to-insight workflow"
+              />
+            </div>
           </div>
-          <div className="hero__note"><span>01</span><p><strong>Prepare</strong>Clean and control the source.</p></div>
-          <div className="hero__note hero__note--two"><span>02</span><p><strong>Model</strong>Create reliable relationships.</p></div>
-          <div className="hero__note hero__note--three"><span>03</span><p><strong>Communicate</strong>Explain what matters.</p></div>
         </div>
       </section>
 
