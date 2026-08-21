@@ -72,7 +72,13 @@ svg { width: 1.1rem; fill: none; stroke: currentColor; stroke-linecap: round; st
 .hero__visual { min-height: 540px; background: var(--ink); position: relative; }
 .hero__visual::before { content: ""; position: absolute; width: 62%; height: 74%; top: -24px; right: -24px; border: 1px solid var(--gold); }
 .hero__dashboard { position: absolute; inset: 30px 20px; padding: .5rem; overflow: hidden; background: #061a2b; border: 1px solid rgba(255,255,255,.24); box-shadow: 0 16px 34px rgba(4,24,31,.28); display: grid; place-items: center; }
-.hero__dashboard img { position: absolute; inset: .5rem; display: block; width: calc(100% - 1rem); height: calc(100% - 1rem); object-fit: contain; object-position: center; border-radius: .35rem; filter: saturate(.94) contrast(1.01); }
+.hero__dashboard picture { position: absolute; inset: 0; display: block; }
+.hero__dashboard img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; border-radius: .35rem; filter: saturate(.94) contrast(1.01); }
+
+@media (min-width: 1800px) {
+  .hero__visual { min-height: 0; aspect-ratio: 43 / 25; }
+  .hero__dashboard { inset: 20px; padding: 0; }
+}
 .programme-strip { padding: 1rem clamp(1.5rem, 7vw, 8rem); background: var(--ink); color: #d8e6e6; display: flex; align-items: center; justify-content: center; gap: clamp(1rem, 4vw, 4rem); }
 .programme-strip p { margin: 0; font-size: .67rem; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
 .programme-strip span { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }

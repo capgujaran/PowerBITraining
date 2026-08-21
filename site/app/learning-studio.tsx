@@ -276,10 +276,13 @@ function Home({ completed, openModule, navigate }: { completed: number[]; openMo
         </div>
         <div className="hero__visual" aria-label="Power BI workflow illustration">
           <div className="hero__dashboard">
-            <img
-              src="./assets/screenshots/homepage-dashboard-infographic-v3.png"
-              alt="Business intelligence infographic with aligned KPIs, trends, regional analysis and a data-to-insight workflow"
-            />
+            <picture>
+              <source media="(min-width: 1800px)" srcSet="./assets/screenshots/homepage-dashboard-infographic-wide-v4.png" />
+              <img
+                src="./assets/screenshots/homepage-dashboard-infographic-v3.png"
+                alt="Business intelligence infographic with aligned KPIs, trends, regional analysis and a data-to-insight workflow"
+              />
+            </picture>
           </div>
         </div>
       </section>
